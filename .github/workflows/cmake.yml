@@ -1,0 +1,122 @@
+name: Build with CMake in Docker containers
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        dockeros: ['Ubuntu', 'Fedora']
+        include:
+          - dockeros: Ubuntu
+            container: "thijswithaar/ubuntu:devel"
+          - dockeros: Fedora
+            container: "thijswithaar/fedora:rawhide"
+
+    container:
+      image: ${{ matrix.container }}
+
+    steps:
+    - name: Checkout source code
+      uses: actions/checkout@v4
+
+    - name: Build
+      run: |
+       cmake --preset release
+       cmake --build --preset release -- package
+
+    - name: Store artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.dockeros }} installer
+        path: |
+          ${{github.workspace}}/build*/*.deb
+          ${{github.workspace}}/build*/*.rpm
+
+
+  build-macos:
+    # 15=Sequioa
+    # https://github.com/actions/runner-images/blob/main/images/macos/macos-15-Readme.md
+    runs-on: macos-15
+    timeout-minutes: 360 # QT takes a long time to build under vcpkg
+    env:
+      VCPKG_ROOT: '${{ github.workspace }}/vcpkg'
+      CMAKE_TOOLCHAIN_FILE: '${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake'
+      VCPKG_BINARY_SOURCES: 'clear;files,${{ github.workspace }}/vcpkg.cache,readwrite'
+      CMAKE_MAKE_PROGRAM: '/opt/homebrew/bin/ninja'
+
+    steps:
+    - name: Checkout source code
+      uses: actions/checkout@v4
+
+    - name: Install tools
+      # These brew-bottles are already in the image: pkg-config llvm@18
+      run: |
+        brew install ninja autoconf automake libtool autoconf-archive
+        git clone https://github.com/microsoft/vcpkg ${{ env.VCPKG_ROOT }}
+        ${{ env.VCPKG_ROOT }}/bootstrap-vcpkg.sh
+
+    - name: Cache Vcpkg
+      uses: actions/cache@v4
+      with:
+        path: ${{ github.workspace }}/vcpkg.cache
+        key: ${{ runner.os }}-${{ hashFiles('**/vcpkg.json') }}
+
+    - name: Build
+      continue-on-error: true       # VCPKG's qt build can't find Ninja
+      run: |
+        eval "$(brew shellenv)"
+        which brew
+        which ninja
+        echo $PATH
+        export CMAKE_CXX_COMPILER=$(brew --prefix llvm@18)/bin/clang
+        cmake --preset vcpkg_macos
+    # cmake --build --preset release_macos -- package
+
+    - name: Store artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: MacOS installer
+        path: ${{github.workspace}}/build*/*.dmg
+
+
+  build-windows:
+    runs-on: windows-latest
+    timeout-minutes: 360 # QT takes a long time to build under vcpkg
+    env:
+      # VCPKG is here, https://github.com/actions/runner-images/blob/main/images/windows/Windows2022-Readme.md#environment-variables
+      VCPKG_ROOT: 'C:\vcpkg'
+      VCPKG_BINARY_SOURCES: 'clear;files,${{ github.workspace }}\vcpkg.cache,readwrite'
+      CMAKE_TOOLCHAIN_FILE: 'C:\vcpkg\scripts\buildsystems\vcpkg.cmake'
+
+    steps:
+    - name: Checkout source code
+      uses: actions/checkout@v4
+
+    # v7.1.1.4300 is already installed
+    #- name: Install tools (Chocolatey)
+    #  run: choco install --no-progress imagemagick.app
+
+    - name: Cache Vcpkg
+      uses: actions/cache@v4
+      with:
+        path: ${{ github.workspace }}\vcpkg.cache
+        key: ${{ runner.os }}-${{ hashFiles('**/vcpkg.json') }}
+
+    - name: Build
+      run: |
+        cmake --preset vcpkg_msvc
+        cmake --build --preset release_msvc --target=package
+
+    - name: Store artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: Windows installer
+        path: ${{github.workspace}}/build*/*.zip

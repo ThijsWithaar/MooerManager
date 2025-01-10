@@ -1,0 +1,17 @@
+{
+	"name" : "Ubuntu Noble (22.04)",
+	"build": {
+	"dockerfile": "Dockerfile.ubuntu",
+	"cacheFrom": "ghcr.io/thijswithaar/ubuntu"
+	},
+	"containerEnv": {
+    	"DEVCONTAINER_NAME": "ubuntu"
+	},
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-vscode.cpptools-extension-pack"
+			]
+		}
+	}
+}
