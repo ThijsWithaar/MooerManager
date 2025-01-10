@@ -1,0 +1,65 @@
+{
+	"version": 4,
+	"configurePresets": [
+		{
+			"name": "debug",
+			"generator": "Ninja",
+			"binaryDir": "${sourceDir}/build.${presetName}$penv{DEVCONTAINER_NAME}",
+			"cacheVariables": {
+				"CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+				"CMAKE_BUILD_WITH_INSTALL_RPATH": "ON",
+				"CPACK_GENERATOR": "DEB",
+				"CMAKE_BUILD_TYPE": "Debug"
+			}
+		},
+		{
+			"name": "release",
+			"inherits": "debug",
+			"displayName": "Release",
+			"cacheVariables": {
+				"CMAKE_BUILD_TYPE": "Release"
+			}
+		},
+		{
+			"name": "vcpkg_macos",
+			"inherits": "release",
+			"cacheVariables": {
+				"CMAKE_CXX_COMPILER": "clang++",
+				"VCPKG_OVERLAY_TRIPLETS": "${sourceDir}/triplets",
+				"CMAKE_TOOLCHAIN_FILE": "$penv{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+			}
+		},
+		{
+			"name": "vcpkg_msvc",
+			"inherits": "release",
+			"generator": "Visual Studio 17 2022",
+			"cacheVariables": {
+				"VCPKG_OVERLAY_TRIPLETS": "${sourceDir}/triplets",
+				"CMAKE_TOOLCHAIN_FILE": "$penv{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+			}
+		}
+	],
+	"buildPresets": [
+		{
+			"name": "release",
+			"configuration": "Release",
+			"configurePreset": "release"
+		},
+		{
+			"name": "release_msvc",
+			"configuration": "Release",
+			"configurePreset": "vcpkg_msvc"
+		},
+		{
+			"name": "release_macos",
+			"configuration": "Release",
+			"configurePreset": "vcpkg_macos"
+		}
+	],
+	"testPresets": [
+		{
+			"name": "test-debug",
+			"configurePreset": "debug"
+		}
+	]
+}

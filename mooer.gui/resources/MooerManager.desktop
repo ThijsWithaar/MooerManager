@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=0.1
+Name=Mooer Manager
+Comment=GUI to control Mooer's GE200 Guitar Effects over USB
+Exec=/usr/bin/MooerManager
+Icon=MooerManager
+Terminal=false
+Type=Application
+Keywords=audio;music;
+Categories=KDE;AudioVideo;Audio;

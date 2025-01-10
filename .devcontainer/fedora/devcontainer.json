@@ -1,0 +1,14 @@
+{
+	"name" : "Fedora Rawhide",
+	"image": "thijswithaar/fedora:rawhide",
+	"containerEnv": {
+    	"DEVCONTAINER_NAME": "fedora"
+	},
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-vscode.cpptools-extension-pack"
+			]
+		}
+	}
+}

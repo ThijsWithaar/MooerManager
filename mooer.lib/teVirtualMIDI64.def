@@ -1,0 +1,13 @@
+EXPORTS
+virtualMIDIClosePort	@31
+virtualMIDICreatePort	@32
+virtualMIDICreatePortEx	@33
+virtualMIDICreatePortEx2	@34
+virtualMIDICreatePortEx3	@35
+virtualMIDIGetData		@36
+virtualMIDIGetDriverVersion		@37
+virtualMIDIGetProcesses		@38
+virtualMIDIGetVersion	@39
+virtualMIDILogging	@40
+virtualMIDISendData	@41
+virtualMIDIShutdown	@42
