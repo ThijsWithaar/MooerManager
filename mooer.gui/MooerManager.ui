@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>795</width>
+    <width>994</width>
     <height>619</height>
    </rect>
   </property>
@@ -17,347 +17,6 @@
    <layout class="QVBoxLayout" name="verticalLayout_2">
     <item>
      <layout class="QGridLayout" name="gridLayout_4">
-      <item row="3" column="1">
-       <widget class="QGroupBox" name="gbAmp">
-        <property name="title">
-         <string>Amplifier</string>
-        </property>
-        <layout class="QGridLayout" name="gridLayout_3">
-         <item row="1" column="1">
-          <widget class="QComboBox" name="cb_amp_type"/>
-         </item>
-         <item row="5" column="0">
-          <widget class="QLabel" name="l_amp_treble">
-           <property name="text">
-            <string>Treble</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="0">
-          <widget class="QCheckBox" name="cb_amp_enabled">
-           <property name="text">
-            <string>Enabled</string>
-           </property>
-          </widget>
-         </item>
-         <item row="3" column="0">
-          <widget class="QLabel" name="l_amp_bass">
-           <property name="text">
-            <string>Bass</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="0">
-          <widget class="QLabel" name="l_amp_type">
-           <property name="text">
-            <string>Type</string>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="1">
-          <widget class="QSlider" name="s_amp_gain">
-           <property name="orientation">
-            <enum>Qt::Orientation::Horizontal</enum>
-           </property>
-          </widget>
-         </item>
-         <item row="6" column="0">
-          <widget class="QLabel" name="l_amp_pres">
-           <property name="text">
-            <string>Pres</string>
-           </property>
-          </widget>
-         </item>
-         <item row="4" column="0">
-          <widget class="QLabel" name="l_amp_mid">
-           <property name="text">
-            <string>Mid</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="1">
-          <widget class="QPushButton" name="pb_amp_load">
-           <property name="text">
-            <string>Load from disk</string>
-           </property>
-           <property name="icon">
-            <iconset theme="QIcon::ThemeIcon::DocumentOpen"/>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="0">
-          <widget class="QLabel" name="l_amp_gain">
-           <property name="text">
-            <string>Gain</string>
-           </property>
-          </widget>
-         </item>
-         <item row="7" column="0">
-          <widget class="QLabel" name="l_amp_mst">
-           <property name="text">
-            <string>MST</string>
-           </property>
-          </widget>
-         </item>
-         <item row="3" column="1">
-          <widget class="QSlider" name="s_amp_bass">
-           <property name="orientation">
-            <enum>Qt::Orientation::Horizontal</enum>
-           </property>
-          </widget>
-         </item>
-         <item row="4" column="1">
-          <widget class="QSlider" name="s_amp_mid">
-           <property name="orientation">
-            <enum>Qt::Orientation::Horizontal</enum>
-           </property>
-          </widget>
-         </item>
-         <item row="5" column="1">
-          <widget class="QSlider" name="s_amp_treble">
-           <property name="orientation">
-            <enum>Qt::Orientation::Horizontal</enum>
-           </property>
-          </widget>
-         </item>
-         <item row="6" column="1">
-          <widget class="QSlider" name="s_amp_pres">
-           <property name="orientation">
-            <enum>Qt::Orientation::Horizontal</enum>
-           </property>
-          </widget>
-         </item>
-         <item row="7" column="1">
-          <widget class="QSlider" name="s_amp_mst">
-           <property name="orientation">
-            <enum>Qt::Orientation::Horizontal</enum>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </widget>
-      </item>
-      <item row="1" column="1">
-       <widget class="QGroupBox" name="gbFX">
-        <property name="title">
-         <string>FX</string>
-        </property>
-        <layout class="QGridLayout" name="gridLayout_2">
-         <item row="2" column="1">
-          <widget class="QSlider" name="s_fx_p1">
-           <property name="maximum">
-            <number>100</number>
-           </property>
-           <property name="orientation">
-            <enum>Qt::Orientation::Horizontal</enum>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="0">
-          <widget class="QLabel" name="l_fx_p1">
-           <property name="text">
-            <string>Attack</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="1">
-          <widget class="QComboBox" name="cb_fx_type">
-           <item>
-            <property name="text">
-             <string>Cry Wah</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>535 Wah</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>Auto Wah</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>Talk Wah ah</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>Talk Wah oh</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>Touch Wah</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>Yellow Comp</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>Blue Comp</string>
-            </property>
-           </item>
-          </widget>
-         </item>
-         <item row="3" column="0">
-          <widget class="QLabel" name="l_fx_p2">
-           <property name="text">
-            <string>Threshold</string>
-           </property>
-          </widget>
-         </item>
-         <item row="3" column="1">
-          <widget class="QSlider" name="s_fx_p2">
-           <property name="orientation">
-            <enum>Qt::Orientation::Horizontal</enum>
-           </property>
-          </widget>
-         </item>
-         <item row="4" column="0">
-          <widget class="QLabel" name="l_fx_p3">
-           <property name="text">
-            <string>Ratio</string>
-           </property>
-          </widget>
-         </item>
-         <item row="4" column="1">
-          <widget class="QSlider" name="s_fx_p3">
-           <property name="orientation">
-            <enum>Qt::Orientation::Horizontal</enum>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="0">
-          <widget class="QCheckBox" name="cb_fx_enabled">
-           <property name="text">
-            <string>Enabled</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="0">
-          <widget class="QLabel" name="l_fx_type">
-           <property name="text">
-            <string>Type</string>
-           </property>
-          </widget>
-         </item>
-         <item row="5" column="0">
-          <widget class="QLabel" name="l_fx_p4">
-           <property name="text">
-            <string>Level</string>
-           </property>
-          </widget>
-         </item>
-         <item row="5" column="1">
-          <widget class="QSlider" name="s_fx_p4">
-           <property name="orientation">
-            <enum>Qt::Orientation::Horizontal</enum>
-           </property>
-          </widget>
-         </item>
-         <item row="6" column="0">
-          <spacer name="verticalSpacer_5">
-           <property name="orientation">
-            <enum>Qt::Orientation::Vertical</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>20</width>
-             <height>40</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
-        </layout>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QGroupBox" name="gbPatch">
-        <property name="title">
-         <string>Patches</string>
-        </property>
-        <layout class="QGridLayout" name="gridLayout_5">
-         <item row="0" column="4">
-          <widget class="QPushButton" name="pbPatchList">
-           <property name="text">
-            <string>Download Settings</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="0">
-          <widget class="QPushButton" name="pbIdentify">
-           <property name="text">
-            <string>Identify</string>
-           </property>
-          </widget>
-         </item>
-         <item row="4" column="0">
-          <spacer name="verticalSpacer_2">
-           <property name="orientation">
-            <enum>Qt::Orientation::Vertical</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>20</width>
-             <height>40</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
-         <item row="3" column="4">
-          <widget class="QComboBox" name="cbPatch"/>
-         </item>
-         <item row="3" column="0">
-          <layout class="QHBoxLayout" name="horizontalLayout">
-           <property name="leftMargin">
-            <number>0</number>
-           </property>
-           <item>
-            <widget class="QLabel" name="lPatch">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="text">
-              <string>Patch</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="pbLoadPreset">
-             <property name="text">
-              <string/>
-             </property>
-             <property name="icon">
-              <iconset theme="QIcon::ThemeIcon::DocumentOpen"/>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </item>
-        </layout>
-       </widget>
-      </item>
-      <item row="5" column="0">
-       <spacer name="verticalSpacer">
-        <property name="orientation">
-         <enum>Qt::Orientation::Vertical</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>20</width>
-          <height>40</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
       <item row="3" column="0">
        <widget class="QGroupBox" name="gbDS">
         <property name="title">
@@ -380,6 +39,9 @@
          </item>
          <item row="4" column="1">
           <widget class="QSlider" name="s_ds_p3">
+           <property name="maximum">
+            <number>100</number>
+           </property>
            <property name="orientation">
             <enum>Qt::Orientation::Horizontal</enum>
            </property>
@@ -408,6 +70,9 @@
          </item>
          <item row="3" column="1">
           <widget class="QSlider" name="s_ds_p2">
+           <property name="maximum">
+            <number>100</number>
+           </property>
            <property name="orientation">
             <enum>Qt::Orientation::Horizontal</enum>
            </property>
@@ -519,13 +184,16 @@
          </item>
          <item row="2" column="1">
           <widget class="QSlider" name="s_ds_p1">
+           <property name="maximum">
+            <number>100</number>
+           </property>
            <property name="orientation">
             <enum>Qt::Orientation::Horizontal</enum>
            </property>
           </widget>
          </item>
          <item row="5" column="0">
-          <spacer name="verticalSpacer_4">
+          <spacer name="vs_ds">
            <property name="orientation">
             <enum>Qt::Orientation::Vertical</enum>
            </property>
@@ -540,16 +208,144 @@
         </layout>
        </widget>
       </item>
+      <item row="1" column="0">
+       <widget class="QGroupBox" name="gbPatch">
+        <property name="title">
+         <string>Patches</string>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_5">
+         <item row="0" column="4">
+          <widget class="QPushButton" name="pbPatchList">
+           <property name="text">
+            <string>Download Settings</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0">
+          <widget class="QPushButton" name="pbIdentify">
+           <property name="text">
+            <string>Identify</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="0">
+          <spacer name="vs_patch">
+           <property name="orientation">
+            <enum>Qt::Orientation::Vertical</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>20</width>
+             <height>40</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item row="3" column="4">
+          <widget class="QComboBox" name="cbPatch"/>
+         </item>
+         <item row="3" column="0">
+          <layout class="QHBoxLayout" name="horizontalLayout">
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="QLabel" name="lPatch">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="text">
+              <string>Patch</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pbLoadPreset">
+             <property name="text">
+              <string/>
+             </property>
+             <property name="icon">
+              <iconset theme="QIcon::ThemeIcon::DocumentOpen"/>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </widget>
+      </item>
       <item row="1" column="2">
        <widget class="QGroupBox" name="gbCab">
         <property name="title">
          <string>Cabinet</string>
         </property>
         <layout class="QGridLayout" name="gridLayout_6">
+         <item row="1" column="1">
+          <widget class="QComboBox" name="cb_cab_type"/>
+         </item>
+         <item row="2" column="1">
+          <widget class="QComboBox" name="cb_cab_tube">
+           <item>
+            <property name="text">
+             <string>Off</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>EL34</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>EL84</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>6L6</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>6V6</string>
+            </property>
+           </item>
+          </widget>
+         </item>
          <item row="1" column="0">
           <widget class="QLabel" name="l_cab_type">
            <property name="text">
             <string>Type</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="1">
+          <widget class="QDial" name="d_cab_distance">
+           <property name="maximum">
+            <number>100</number>
+           </property>
+           <property name="value">
+            <number>50</number>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="l_cab_mic">
+           <property name="text">
+            <string>Mic</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QPushButton" name="pb_cab_load">
+           <property name="text">
+            <string>Load from disk</string>
+           </property>
+           <property name="icon">
+            <iconset theme="QIcon::ThemeIcon::DocumentOpen"/>
            </property>
           </widget>
          </item>
@@ -607,30 +403,6 @@
            </item>
           </widget>
          </item>
-         <item row="4" column="1">
-          <widget class="QDial" name="d_cab_distance">
-           <property name="maximum">
-            <number>100</number>
-           </property>
-           <property name="value">
-            <number>50</number>
-           </property>
-          </widget>
-         </item>
-         <item row="3" column="0">
-          <widget class="QLabel" name="l_cab_mic">
-           <property name="text">
-            <string>Mic</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="0">
-          <widget class="QCheckBox" name="cb_cab_enabled">
-           <property name="text">
-            <string>Enabled</string>
-           </property>
-          </widget>
-         </item>
          <item row="5" column="1">
           <widget class="QLabel" name="l_distance">
            <property name="text">
@@ -641,33 +413,18 @@
            </property>
           </widget>
          </item>
-         <item row="2" column="1">
-          <widget class="QComboBox" name="cb_cab_tube">
-           <item>
-            <property name="text">
-             <string>Off</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>EL34</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>EL84</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>6L6</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>6V6</string>
-            </property>
-           </item>
+         <item row="0" column="0">
+          <widget class="QCheckBox" name="cb_cab_enabled">
+           <property name="text">
+            <string>Enabled</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="l_cab_tube">
+           <property name="text">
+            <string>Tube</string>
+           </property>
           </widget>
          </item>
          <item row="5" column="0">
@@ -677,16 +434,6 @@
            </property>
            <property name="alignment">
             <set>Qt::AlignmentFlag::AlignCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="1">
-          <widget class="QComboBox" name="cb_cab_type"/>
-         </item>
-         <item row="2" column="0">
-          <widget class="QLabel" name="l_cab_tube">
-           <property name="text">
-            <string>Tube</string>
            </property>
           </widget>
          </item>
@@ -706,16 +453,6 @@
            </property>
           </widget>
          </item>
-         <item row="0" column="1">
-          <widget class="QPushButton" name="pb_cab_load">
-           <property name="text">
-            <string>Load from disk</string>
-           </property>
-           <property name="icon">
-            <iconset theme="QIcon::ThemeIcon::DocumentOpen"/>
-           </property>
-          </widget>
-         </item>
         </layout>
        </widget>
       </item>
@@ -725,8 +462,32 @@
          <string>Equalizer</string>
         </property>
         <layout class="QGridLayout" name="gridLayout_7">
-         <item row="5" column="0">
-          <spacer name="verticalSpacer_3">
+         <item row="1" column="0">
+          <widget class="QLabel" name="l_eq_type">
+           <property name="text">
+            <string>Type</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QSlider" name="s_eq_band1">
+           <property name="maximum">
+            <number>100</number>
+           </property>
+           <property name="orientation">
+            <enum>Qt::Orientation::Horizontal</enum>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="0">
+          <widget class="QLabel" name="l_eq_band3">
+           <property name="text">
+            <string>Band 3</string>
+           </property>
+          </widget>
+         </item>
+         <item row="6" column="0">
+          <spacer name="vs_eq">
            <property name="orientation">
             <enum>Qt::Orientation::Vertical</enum>
            </property>
@@ -738,43 +499,18 @@
            </property>
           </spacer>
          </item>
-         <item row="3" column="1">
-          <widget class="QSlider" name="s_eq_band2">
-           <property name="orientation">
-            <enum>Qt::Orientation::Horizontal</enum>
+         <item row="4" column="1">
+          <widget class="QSlider" name="s_eq_band3">
+           <property name="maximum">
+            <number>100</number>
            </property>
-          </widget>
-         </item>
-         <item row="0" column="0">
-          <widget class="QCheckBox" name="cb_eq_enabled">
-           <property name="text">
-            <string>Enabled</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="0">
-          <widget class="QLabel" name="l_eq_type">
-           <property name="text">
-            <string>Type</string>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="0">
-          <widget class="QLabel" name="l_eq_band1">
-           <property name="text">
-            <string>Band 1</string>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="1">
-          <widget class="QSlider" name="s_eq_band1">
            <property name="orientation">
             <enum>Qt::Orientation::Horizontal</enum>
            </property>
           </widget>
          </item>
          <item row="1" column="1">
-          <widget class="QComboBox" name="comboBox">
+          <widget class="QComboBox" name="cb_eq_type">
            <item>
             <property name="text">
              <string>MOOER G</string>
@@ -797,6 +533,16 @@
            </item>
           </widget>
          </item>
+         <item row="3" column="1">
+          <widget class="QSlider" name="s_eq_band2">
+           <property name="maximum">
+            <number>100</number>
+           </property>
+           <property name="orientation">
+            <enum>Qt::Orientation::Horizontal</enum>
+           </property>
+          </widget>
+         </item>
          <item row="3" column="0">
           <widget class="QLabel" name="l_eq_band2">
            <property name="text">
@@ -804,18 +550,616 @@
            </property>
           </widget>
          </item>
-         <item row="4" column="0">
-          <widget class="QLabel" name="l_eq_band3">
+         <item row="0" column="0">
+          <widget class="QCheckBox" name="cb_eq_enabled">
            <property name="text">
-            <string>TextLabel</string>
+            <string>Enabled</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="l_eq_band1">
+           <property name="text">
+            <string>Band 1</string>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="0">
+          <widget class="QLabel" name="l_eq_band4">
+           <property name="text">
+            <string>Band 4</string>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="1">
+          <widget class="QSlider" name="s_eq_band4">
+           <property name="orientation">
+            <enum>Qt::Orientation::Horizontal</enum>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="QGroupBox" name="gbAmp">
+        <property name="title">
+         <string>Amplifier</string>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_3">
+         <item row="1" column="1">
+          <widget class="QComboBox" name="cb_amp_type"/>
+         </item>
+         <item row="5" column="0">
+          <widget class="QLabel" name="l_amp_treble">
+           <property name="text">
+            <string>Treble</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0">
+          <widget class="QCheckBox" name="cb_amp_enabled">
+           <property name="text">
+            <string>Enabled</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="l_amp_bass">
+           <property name="text">
+            <string>Bass</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="l_amp_type">
+           <property name="text">
+            <string>Type</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QSlider" name="s_amp_gain">
+           <property name="maximum">
+            <number>100</number>
+           </property>
+           <property name="orientation">
+            <enum>Qt::Orientation::Horizontal</enum>
+           </property>
+          </widget>
+         </item>
+         <item row="6" column="0">
+          <widget class="QLabel" name="l_amp_pres">
+           <property name="text">
+            <string>Pres</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="0">
+          <widget class="QLabel" name="l_amp_mid">
+           <property name="text">
+            <string>Mid</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QPushButton" name="pb_amp_load">
+           <property name="text">
+            <string>Load from disk</string>
+           </property>
+           <property name="icon">
+            <iconset theme="QIcon::ThemeIcon::DocumentOpen"/>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="l_amp_gain">
+           <property name="text">
+            <string>Gain</string>
+           </property>
+          </widget>
+         </item>
+         <item row="7" column="0">
+          <widget class="QLabel" name="l_amp_mst">
+           <property name="text">
+            <string>MST</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="1">
+          <widget class="QSlider" name="s_amp_bass">
+           <property name="maximum">
+            <number>100</number>
+           </property>
+           <property name="orientation">
+            <enum>Qt::Orientation::Horizontal</enum>
            </property>
           </widget>
          </item>
          <item row="4" column="1">
-          <widget class="QSlider" name="s_eq_band3">
+          <widget class="QSlider" name="s_amp_mid">
+           <property name="maximum">
+            <number>100</number>
+           </property>
            <property name="orientation">
             <enum>Qt::Orientation::Horizontal</enum>
            </property>
+          </widget>
+         </item>
+         <item row="5" column="1">
+          <widget class="QSlider" name="s_amp_treble">
+           <property name="maximum">
+            <number>100</number>
+           </property>
+           <property name="orientation">
+            <enum>Qt::Orientation::Horizontal</enum>
+           </property>
+          </widget>
+         </item>
+         <item row="6" column="1">
+          <widget class="QSlider" name="s_amp_pres">
+           <property name="maximum">
+            <number>100</number>
+           </property>
+           <property name="orientation">
+            <enum>Qt::Orientation::Horizontal</enum>
+           </property>
+          </widget>
+         </item>
+         <item row="7" column="1">
+          <widget class="QSlider" name="s_amp_mst">
+           <property name="maximum">
+            <number>100</number>
+           </property>
+           <property name="orientation">
+            <enum>Qt::Orientation::Horizontal</enum>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QGroupBox" name="gbFX">
+        <property name="title">
+         <string>FX</string>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_2">
+         <item row="2" column="1">
+          <widget class="QSlider" name="s_fx_p1">
+           <property name="maximum">
+            <number>100</number>
+           </property>
+           <property name="orientation">
+            <enum>Qt::Orientation::Horizontal</enum>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="l_fx_p1">
+           <property name="text">
+            <string>Attack</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QComboBox" name="cb_fx_type">
+           <item>
+            <property name="text">
+             <string>Cry Wah</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>535 Wah</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Auto Wah</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Talk Wah ah</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Talk Wah oh</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Touch Wah</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Yellow Comp</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Blue Comp</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="l_fx_p2">
+           <property name="text">
+            <string>Threshold</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="1">
+          <widget class="QSlider" name="s_fx_p2">
+           <property name="maximum">
+            <number>100</number>
+           </property>
+           <property name="orientation">
+            <enum>Qt::Orientation::Horizontal</enum>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="0">
+          <widget class="QLabel" name="l_fx_p3">
+           <property name="text">
+            <string>Ratio</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="1">
+          <widget class="QSlider" name="s_fx_p3">
+           <property name="maximum">
+            <number>100</number>
+           </property>
+           <property name="orientation">
+            <enum>Qt::Orientation::Horizontal</enum>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0">
+          <widget class="QCheckBox" name="cb_fx_enabled">
+           <property name="text">
+            <string>Enabled</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="l_fx_type">
+           <property name="text">
+            <string>Type</string>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="0">
+          <widget class="QLabel" name="l_fx_p4">
+           <property name="text">
+            <string>Level</string>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="1">
+          <widget class="QSlider" name="s_fx_p4">
+           <property name="maximum">
+            <number>100</number>
+           </property>
+           <property name="orientation">
+            <enum>Qt::Orientation::Horizontal</enum>
+           </property>
+          </widget>
+         </item>
+         <item row="6" column="0">
+          <spacer name="vs_fx">
+           <property name="orientation">
+            <enum>Qt::Orientation::Vertical</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>20</width>
+             <height>40</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item row="5" column="0">
+       <spacer name="verticalSpacer">
+        <property name="orientation">
+         <enum>Qt::Orientation::Vertical</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>20</width>
+          <height>40</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item row="1" column="3">
+       <widget class="QGroupBox" name="gpNoiseGate">
+        <property name="title">
+         <string>Noise Gate</string>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_8">
+         <item row="2" column="0">
+          <widget class="QLabel" name="l_ns_p1">
+           <property name="text">
+            <string>Attack</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QComboBox" name="cb_ns_type">
+           <item>
+            <property name="text">
+             <string>Noise Killer</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Intel Reducer</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Noise Gate</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="3" column="1">
+          <widget class="QSlider" name="sl_ns_p2">
+           <property name="maximum">
+            <number>100</number>
+           </property>
+           <property name="orientation">
+            <enum>Qt::Orientation::Horizontal</enum>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0">
+          <widget class="QCheckBox" name="cb_ns_enabled">
+           <property name="text">
+            <string>Enabled</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QSlider" name="sl_ns_p1">
+           <property name="maximum">
+            <number>100</number>
+           </property>
+           <property name="orientation">
+            <enum>Qt::Orientation::Horizontal</enum>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="1">
+          <widget class="QSlider" name="sl_ns_p3">
+           <property name="orientation">
+            <enum>Qt::Orientation::Horizontal</enum>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="0">
+          <widget class="QLabel" name="l_ns_p3">
+           <property name="text">
+            <string>Threshold</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="l_ns_type">
+           <property name="text">
+            <string>Type</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="l_ns_p2">
+           <property name="text">
+            <string>Release</string>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="0">
+          <spacer name="vs_ns">
+           <property name="orientation">
+            <enum>Qt::Orientation::Vertical</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>20</width>
+             <height>40</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item row="3" column="3">
+       <widget class="QGroupBox" name="gbMod">
+        <property name="title">
+         <string>Modulator</string>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_9">
+         <item row="2" column="1">
+          <widget class="QSlider" name="s_mod_p1">
+           <property name="orientation">
+            <enum>Qt::Orientation::Horizontal</enum>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="1">
+          <widget class="QSlider" name="s_mod_p2">
+           <property name="orientation">
+            <enum>Qt::Orientation::Horizontal</enum>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="0">
+          <widget class="QLabel" name="l_mod_p3">
+           <property name="text">
+            <string>Depth</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="l_mod_p1">
+           <property name="text">
+            <string>Rate</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="l_mod_p2">
+           <property name="text">
+            <string>Level</string>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="0">
+          <spacer name="vs_mod">
+           <property name="orientation">
+            <enum>Qt::Orientation::Vertical</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>20</width>
+             <height>40</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item row="4" column="1">
+          <widget class="QSlider" name="s_mod_p3">
+           <property name="orientation">
+            <enum>Qt::Orientation::Horizontal</enum>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0">
+          <widget class="QCheckBox" name="cb_mod_enabled">
+           <property name="text">
+            <string>Enabled</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="l_mod_type">
+           <property name="text">
+            <string>Type</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QComboBox" name="cb_mod_type">
+           <item>
+            <property name="text">
+             <string>Phaser</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Step Phaser</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Fat Phaser</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Flanger</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Jet-Flanger</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Tremolo</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Stutter</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Vibrato</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Poly Pitch</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Detune</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Rotary Speaker</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Ana-Chorus</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Tri-Chorus</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Ring Modulator</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Q-Filter</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>High Pass</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Low Pass</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Slow Gear</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Lo-Fi</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Mono Pitch</string>
+            </property>
+           </item>
           </widget>
          </item>
         </layout>
@@ -830,7 +1174,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>795</width>
+     <width>994</width>
      <height>30</height>
     </rect>
    </property>
@@ -838,6 +1182,7 @@
     <property name="title">
      <string>F&amp;ile</string>
     </property>
+    <addaction name="actionLoad_backup"/>
     <addaction name="action_Quit"/>
    </widget>
    <addaction name="menuFile"/>
@@ -857,6 +1202,17 @@
   <action name="actionLoad_Patch">
    <property name="text">
     <string>&amp;Load Patch</string>
+   </property>
+  </action>
+  <action name="actionLoad_backup">
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::DocumentOpen"/>
+   </property>
+   <property name="text">
+    <string>Restore backup</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+B</string>
    </property>
   </action>
  </widget>

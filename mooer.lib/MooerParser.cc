@@ -18,6 +18,7 @@
 namespace Mooer
 {
 
+
 const std::uint16_t g_hash_lut[256] = {
 	0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50a5, 0x60c6, 0x70e7, 0x8108, 0x9129, 0xa14a, 0xb16b, 0xc18c, 0xd1ad,
 	0xe1ce, 0xf1ef, 0x1231, 0x0210, 0x3273, 0x2252, 0x52b5, 0x4294, 0x72f7, 0x62d6, 0x9339, 0x8318, 0xb37b, 0xa35a,
@@ -46,6 +47,20 @@ std::uint16_t calculateChecksum(std::span<std::uint8_t> m)
 	for(std::uint8_t v : m)
 		chk = g_hash_lut[(chk >> 8) ^ v] ^ (chk << 8);
 	return ~chk;
+}
+
+
+File::Mbf LoadBackup(std::span<const std::uint8_t> mbfData)
+{
+	using namespace std::literals;
+	if(mbfData.size() <= sizeof(File::Mbf))
+		throw std::runtime_error(std::format("MBF must be at least {} bytes\n", sizeof(File::Mbf)));
+
+	auto mbf = reinterpret_cast<const File::Mbf*>(mbfData.data());
+	if(std::string_view(mbf->manufacturer) != "MOOER"sv)
+		throw std::runtime_error("MBF has an invalid heade");
+
+	return *mbf;
 }
 
 

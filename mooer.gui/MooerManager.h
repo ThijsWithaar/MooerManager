@@ -4,13 +4,20 @@
 
 #include <QMainWindow>
 
+#include <Midi.h>
 #include <MooerParser.h>
 #include <UsbConnection.h>
+
+#ifdef __linux__
+#include <Jack.h>
+#define MOOER_HAS_MIDI
+#endif
+
 
 #include "ui_MooerManager.h"
 
 
-class MooerManager : public QMainWindow, public USB::ConnectionListener, public Mooer::Listener
+class MooerManager : public QMainWindow, USB::ConnectionListener, Mooer::Listener, MIDI::Callback
 {
 	Q_OBJECT
 public:
@@ -32,12 +39,19 @@ private:
 	void OnMooerFrame(const Mooer::RxFrame::Frame& frame) override;
 	void OnMooerIdentify(const Mooer::Listener::Identity& id) override;
 
+	// MIDI::Callback
+	void OnControlChange(std::uint8_t channel, MIDI::ControlChange controller, std::uint8_t value) override;
+	void OnProgramChange(std::uint8_t channel, std::uint8_t value) override;
+	void OnSysex(std::uint8_t channel, MIDI::Manufacturer manufacturer, std::span<std::uint8_t> data) override;
+
 	// GUI setup
 	void ConnectFX();
 	void ConnectDistortion();
 	void ConnectAmplifier();
 	void ConnectCabinet();
 	void ConnectNoiseGate();
+	void ConnectEqualizer();
+	void ConnectModulator();
 
 	// GUI slots
 	void OnAmpLoad();
@@ -50,12 +64,11 @@ private:
 	USB::Connection m_usb;
 	Mooer::Parser m_mooer;
 
-	// Device status
+	// Device
 	std::mutex m_dev_mutex;
 	Mooer::Listener::Identity m_device_id;
-	int m_patch_id;
-	std::vector<Mooer::Patch> m_patches;
-	Mooer::DeviceFormat::AmpModelNames m_ampModelNames;
-	// Device status, now complete
-	Mooer::DeviceFormat::State m_mstate;
+	Mooer::DeviceFormat::State m_mstate; // Device state
+#ifdef __linux__
+	Jack::MooerMidiControl m_midi;
+#endif
 };

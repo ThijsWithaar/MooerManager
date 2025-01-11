@@ -7,6 +7,7 @@ else()
 endif()
 if(UNIX AND NOT APPLE)
 	find_package(pipewire REQUIRED)
+	find_package(jack)
 endif()
 
 
@@ -32,7 +33,7 @@ add_library(MooerLib ${HEADERS} ${SOURCES})
 target_compile_features(MooerLib PUBLIC cxx_std_20)
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 	# std::jthread is still expirimental
-	target_compile_options(MooerLib PUBLIC "-fexperimental-library")
+	target_compile_options(MooerLib PUBLIC "-fexperimental-library" "-Wno-invalid-offsetof")
 endif()
 
 target_include_directories(MooerLib PUBLIC
@@ -48,6 +49,7 @@ if(UNIX AND NOT APPLE)
 		PUBLIC 
 			LIBUSB::LIBUSB
 		PRIVATE
+			Jack::Jack
 			Pipewire::Pipewire Pipewire::Spa
 	)
 endif()

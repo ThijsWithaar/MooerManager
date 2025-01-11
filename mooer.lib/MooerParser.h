@@ -47,11 +47,12 @@ void copy(std::span<std::uint8_t> dst, const Struct& src)
 }
 
 template<StandardLayoutType Struct>
-void copy(Struct& dst, std::span<const std::uint8_t> src)
+Struct& copy(Struct& dst, std::span<const std::uint8_t> src)
 {
 	std::span<std::uint8_t> ds = as_span(dst);
 	assert(ds.size() == src.size());
 	std::copy(begin(src), end(src), begin(ds));
+	return dst;
 }
 
 
@@ -117,13 +118,15 @@ struct u16be
 
 	union
 	{
-		split s;
 		std::uint16_t native;
+		split s;
 	};
 };
 static_assert(sizeof(u16be) == 2);
 
-namespace MOFile
+
+/// Structures to define the file-formats
+namespace File
 {
 
 struct FX
@@ -160,6 +163,11 @@ static_assert(sizeof(Cab) == 8);
 
 struct Preset
 {
+	std::string_view getName() const
+	{
+		return {&name[0], strnlen(name, sizeof(name))};
+	}
+
 	std::array<u8, 10> fxOrder;
 	u16be size;
 	char name[16];
@@ -189,6 +197,7 @@ struct PresetPadded : Preset
 };
 static_assert(sizeof(PresetPadded) == 0x200);
 
+
 /// Format of the .MO file
 /// https://github.com/sidekickDan/mooerMoConvert/blob/main/mooer.php
 struct MO
@@ -202,7 +211,38 @@ static_assert(offsetof(Preset, reverb) == 604 - 0x200, "DS reverb incorrect");
 static_assert(sizeof(MO) == 0x400);
 
 
-} // namespace MOFile
+struct MbfPreset
+{
+	u16be index;
+	PresetPadded preset;
+	std::uint8_t pad[0x20];
+};
+static_assert(sizeof(MbfPreset) == 0x222);
+
+struct Mbf
+{
+	char manufacturer[8]; ///< "MOOER "
+	char model[32];
+	char version[7];  ///< "V1.0.0"
+	char version2[7]; ///< "V1.1.0"
+	char version3[7]; ///< "V1.0.0"
+	char zero[24];
+	char buff[4]; ///< "BUFF"
+	// Followed by 2 absolute file-offsets, system header at 0x400 and presets at 0x531
+	char unknown[0x3a7];
+	char system[0x131];
+	char presetHeader[0x11e];
+	std::array<MbfPreset, 199> presets;
+};
+static_assert(offsetof(Mbf, system) == 0x400);
+static_assert(offsetof(Mbf, presetHeader) == 0x531);
+static_assert(offsetof(Mbf, presets) == 0x650);
+
+/// Load a backup from an .mbf file
+Mbf LoadBackup(std::span<const std::uint8_t> mbf);
+
+
+} // namespace File
 
 
 namespace DeviceFormat
@@ -213,7 +253,7 @@ struct FX
 {
 	FX() = default;
 
-	FX(const MOFile::FX& fx)
+	FX(const File::FX& fx)
 	{
 		enabled = fx.enabled;
 		type = fx.type;
@@ -225,8 +265,7 @@ struct FX
 
 	auto& operator=(std::span<const std::uint8_t> s)
 	{
-		copy(*this, s);
-		return *this;
+		return copy(*this, s);
 	}
 
 	u16be enabled, type;
@@ -238,7 +277,7 @@ struct OD
 {
 	OD() = default;
 
-	OD(const MOFile::DS& ds)
+	OD(const File::DS& ds)
 	{
 		enabled = ds.enabled;
 		type = ds.type;
@@ -249,8 +288,7 @@ struct OD
 
 	auto& operator=(std::span<const std::uint8_t> s)
 	{
-		copy(*this, s);
-		return *this;
+		return copy(*this, s);
 	}
 
 	u16be enabled, type;
@@ -262,8 +300,7 @@ struct Amp
 {
 	auto& operator=(std::span<const std::uint8_t> s)
 	{
-		copy(*this, s);
-		return *this;
+		return copy(*this, s);
 	}
 
 	u16be enabled, type;
@@ -275,8 +312,7 @@ struct Cab
 {
 	auto& operator=(std::span<const std::uint8_t> s)
 	{
-		copy(*this, s);
-		return *this;
+		return copy(*this, s);
 	}
 
 	u16be enabled, type;
@@ -289,8 +325,7 @@ struct NS
 {
 	auto& operator=(std::span<const std::uint8_t> s)
 	{
-		copy(*this, s);
-		return *this;
+		return copy(*this, s);
 	}
 
 	u16be enabled, type;
@@ -300,6 +335,11 @@ static_assert(sizeof(NS) == 0x0b - sh);
 
 struct Equalizer
 {
+	auto& operator=(std::span<const std::uint8_t> s)
+	{
+		return copy(*this, s);
+	}
+
 	u16be enabled, type;
 	std::array<u16be, 6> band;
 	std::array<u8, 6> unknown;
@@ -433,33 +473,12 @@ struct State
 	int activeMenu;
 	AmpModelNames ampModelNames;
 	Preset activePreset;
-	std::array<Mooer::MOFile::PresetPadded, 199> savedPresets;
+	std::array<Mooer::File::PresetPadded, 199> savedPresets;
 };
 
 } // namespace DeviceFormat
 
-// ToDo: Use DeviceFormat::Preset;
-struct Patch
-{
-	Patch() = default;
 
-	Patch(std::span<const std::uint8_t> d)
-	{
-		assert(d.size() == data.size());
-		std::copy(begin(d), end(d), begin(data));
-	}
-
-	std::string_view name() const
-	{
-		auto name_span = std::span<const std::uint8_t>(data).subspan(12, 14);
-		auto itEnd = std::find(begin(name_span), end(name_span), 0);
-		std::size_t n = std::distance(begin(name_span), itEnd);
-		return {reinterpret_cast<const char*>(name_span.data()), n};
-	}
-
-	std::array<std::uint8_t, 0x202> data;
-};
-static_assert(sizeof(Patch) == 0x202);
 
 class RxFrame
 {
@@ -704,6 +723,12 @@ public:
 	void SetEQ(const DeviceFormat::Equalizer& s)
 	{
 		std::array<std::uint8_t, sizeof(DeviceFormat::Equalizer) + 1> msg{RxFrame::Group::EQ, 0};
+		copy(std::span(msg).subspan(1), s);
+	}
+
+	void SetModulator(const DeviceFormat::Mod& s)
+	{
+		std::array<std::uint8_t, sizeof(DeviceFormat::Mod) + 1> msg{RxFrame::Group::MOD, 0};
 		copy(std::span(msg).subspan(1), s);
 	}
 

@@ -26,6 +26,7 @@ function(add_resize_command SVG SIZE PNG_OUT)
 	add_custom_command(
 		OUTPUT ${PNG_OUT}
 		DEPENDS ${SVG}
+		COMMAND cmake -E make_directory ${PNG_PATH}
 		COMMAND "${MAGICK}" "-background" "none" "${SVG}" "-density" "4000" "-resize" "${SIZE}x${SIZE}" "${PNG_OUT}"
 	)
 endfunction()

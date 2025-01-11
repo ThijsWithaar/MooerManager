@@ -80,28 +80,28 @@ enum class Manufacturer : std::uint8_t
 	Realtime = 0x7F,
 };
 
-auto operator|(Message m, std::uint8_t n)
+static std::uint8_t operator|(Message m, std::uint8_t n)
 {
 	return std::bit_cast<std::uint8_t>(m) | n;
 }
 
-auto CreateNoteOn(std::uint8_t channel, std::uint8_t note, std::uint8_t velocity)
+static auto CreateNoteOn(std::uint8_t channel, std::uint8_t note, std::uint8_t velocity)
 {
 	return std::array<std::uint8_t, 3>{Message::NoteOn | channel, note, velocity};
 }
 
-auto CreateControlChange(std::uint8_t channel, ControlChange controller, std::uint8_t value)
+static auto CreateControlChange(std::uint8_t channel, ControlChange controller, std::uint8_t value)
 {
 	return std::array<std::uint8_t, 3>{
 		Message::ControlChange | channel, std::bit_cast<std::uint8_t>(controller), value};
 }
 
-auto CreateProgramChange(std::uint8_t channel, std::uint8_t value)
+static auto CreateProgramChange(std::uint8_t channel, std::uint8_t value)
 {
 	return std::array<std::uint8_t, 3>{Message::ProgramChange | channel, value, 0};
 }
 
-auto CreateSysex(std::uint8_t channel, Manufacturer manufacturer, std::span<std::uint8_t> data)
+static auto CreateSysex(std::uint8_t channel, Manufacturer manufacturer, std::span<std::uint8_t> data)
 {
 	std::vector<std::uint8_t> r(data.size() + 3);
 	r[0] = Message::SysexStart | channel;
@@ -118,6 +118,14 @@ public:
 	virtual void OnControlChange(std::uint8_t channel, ControlChange controller, std::uint8_t value) {};
 	virtual void OnProgramChange(std::uint8_t channel, std::uint8_t value) {};
 	virtual void OnSysex(std::uint8_t channel, Manufacturer manufacturer, std::span<std::uint8_t> data) {};
+};
+
+class Sink
+{
+public:
+	virtual void ControlChange(std::uint8_t channel, ControlChange controller, std::uint8_t value) {};
+	virtual void ProgramChange(std::uint8_t channel, std::uint8_t value) {};
+	virtual void Sysex(std::uint8_t channel, Manufacturer manufacturer, std::span<std::uint8_t> value) {};
 };
 
 class Parser
