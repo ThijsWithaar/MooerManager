@@ -472,7 +472,7 @@
          <item row="2" column="1">
           <widget class="QSlider" name="s_eq_band1">
            <property name="maximum">
-            <number>100</number>
+            <number>24</number>
            </property>
            <property name="orientation">
             <enum>Qt::Orientation::Horizontal</enum>
@@ -502,7 +502,7 @@
          <item row="4" column="1">
           <widget class="QSlider" name="s_eq_band3">
            <property name="maximum">
-            <number>100</number>
+            <number>24</number>
            </property>
            <property name="orientation">
             <enum>Qt::Orientation::Horizontal</enum>
@@ -536,7 +536,7 @@
          <item row="3" column="1">
           <widget class="QSlider" name="s_eq_band2">
            <property name="maximum">
-            <number>100</number>
+            <number>24</number>
            </property>
            <property name="orientation">
             <enum>Qt::Orientation::Horizontal</enum>
@@ -573,6 +573,9 @@
          </item>
          <item row="5" column="1">
           <widget class="QSlider" name="s_eq_band4">
+           <property name="maximum">
+            <number>24</number>
+           </property>
            <property name="orientation">
             <enum>Qt::Orientation::Horizontal</enum>
            </property>
@@ -1209,7 +1212,7 @@
     <iconset theme="QIcon::ThemeIcon::DocumentOpen"/>
    </property>
    <property name="text">
-    <string>Restore backup</string>
+    <string>&amp;Restore backup</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+B</string>

@@ -10,7 +10,7 @@
 
 #ifdef __linux__
 #include <Jack.h>
-#define MOOER_HAS_MIDI
+// #define MOOER_HAS_MIDI
 #endif
 
 
@@ -66,9 +66,10 @@ private:
 
 	// Device
 	std::mutex m_dev_mutex;
+	bool m_need_patches;
 	Mooer::Listener::Identity m_device_id;
 	Mooer::DeviceFormat::State m_mstate; // Device state
-#ifdef __linux__
+#if defined(MOOER_HAS_MIDI) and defined(__linux__)
 	Jack::MooerMidiControl m_midi;
 #endif
 };

@@ -6,7 +6,7 @@
 #include <QFileDialog>
 
 
-//#define DEBUG_LVL 3
+#define DEBUG_LVL 3
 
 
 const QString ptFileOpen = "/home/thijs/gitrepo/mooer/traces";
@@ -50,6 +50,7 @@ std::vector<std::uint8_t> ReadFile(std::filesystem::path fn)
 MooerManager::MooerManager(QWidget* parent)
 	: m_usb({Mooer::vendor_id, Mooer::product_id})
 	, m_mooer(&m_usb, this)
+	, m_need_patches(true)
 #ifdef MOOER_HAS_MIDI
 	, m_midi("MooerManager", this)
 #endif
@@ -94,6 +95,9 @@ MooerManager::MooerManager(QWidget* parent)
 	ConnectDistortion();
 	ConnectAmplifier();
 	ConnectCabinet();
+	ConnectNoiseGate();
+	ConnectEqualizer();
+	ConnectModulator();
 
 	connect(
 		this,
@@ -103,6 +107,12 @@ MooerManager::MooerManager(QWidget* parent)
 		{
 			qDebug() << "Connected to " << name;
 			m_ui.statusbar->showMessage(QString("Connected to %1, version %2").arg(name, version), 5 * 1000);
+			if(m_need_patches)
+			{
+				m_mooer.SendFlush();
+				m_mooer.SendPatchListRequest();
+				m_need_patches = false;
+			}
 		},
 		Qt::QueuedConnection);
 
@@ -143,8 +153,7 @@ MooerManager::MooerManager(QWidget* parent)
 
 	// This is the sequence MooerStudio sends out
 	m_mooer.SendIdentifyRequest();
-	m_mooer.SendFlush();
-	m_mooer.SendPatchListRequest();
+	m_mooer.SendIdentifyRequest();
 	qDebug() << "MooerManager: constructor finished";
 }
 
@@ -303,7 +312,7 @@ void MooerManager::ConnectNoiseGate()
 	connect(m_ui.cb_ns_enabled, &QCheckBox::clicked,
 			[=](bool e){ pS->enabled = e; send(); });
 	connect(m_ui.cb_ns_type, &QComboBox::currentIndexChanged,
-			[=](int i){ pS->type = i; send(); });
+			[=](int i){ pS->type = i+1; send(); });
 	connect(m_ui.sl_ns_p1, &QSlider::valueChanged,
 			[=](int v){ pS->attack = v; send(); });
 	connect(m_ui.sl_ns_p2, &QSlider::valueChanged,
@@ -324,13 +333,15 @@ void MooerManager::ConnectEqualizer()
 	connect(m_ui.cb_eq_enabled, &QCheckBox::clicked,
 			[=](bool e){ pS->enabled = e; send(); });
 	connect(m_ui.cb_eq_type, &QComboBox::currentIndexChanged,
-			[=](int i){ pS->type = i; send(); });
+			[=](int i){ pS->type = i+1; send(); });
 	connect(m_ui.s_eq_band1, &QSlider::valueChanged,
 			[=](int v){ pS->band[0] = v; send(); });
 	connect(m_ui.s_eq_band2, &QSlider::valueChanged,
 			[=](int v){ pS->band[1] = v; send(); });
 	connect(m_ui.s_eq_band3, &QSlider::valueChanged,
 			[=](int v){ pS->band[2] = v; send(); });
+	connect(m_ui.s_eq_band4, &QSlider::valueChanged,
+			[=](int v){ pS->band[3] = v; send(); });
 }
 
 
@@ -345,7 +356,7 @@ void MooerManager::ConnectModulator()
 	connect(m_ui.cb_mod_enabled, &QCheckBox::clicked,
 			[=](bool e){ pS->enabled = e; send(); });
 	connect(m_ui.cb_mod_type, &QComboBox::currentIndexChanged,
-			[=](int i){ pS->type = i; send(); });
+			[=](int i){ pS->type = i + 1; send(); });
 	connect(m_ui.s_mod_p1, &QSlider::valueChanged,
 			[=](int v){ pS->rate = v; send(); });
 	connect(m_ui.s_mod_p2, &QSlider::valueChanged,
@@ -403,12 +414,19 @@ void MooerManager::OnMooerFrame(const Mooer::RxFrame::Frame& frame)
 		break;
 	case Mooer::RxFrame::PatchSetting:
 	{
-#ifdef DEBUG_LVL
+#if DEBUG_LVL > 3
 		Mooer::File::PresetPadded preset = data_nochk.subspan(1);
 		qDebug() << std::format("MooerManager: received patch {:3d} {}", frame.index(), preset.getName());
 #endif
-		m_mstate.savedPresets.at(frame.index()) = data_nochk.subspan(1);
-		emit MooerPatchSetting(frame.index());
+		if(data_nochk.size() == 0x201)
+		{
+			m_mstate.savedPresets.at(frame.index()) = data_nochk.subspan(1);
+			emit MooerPatchSetting(frame.index());
+		}
+		else
+		{
+			qDebug() << QString("Received invalid preset of size %1").arg(data_nochk.size());
+		}
 	}
 	break;
 	case Mooer::RxFrame::FX:
@@ -433,8 +451,11 @@ void MooerManager::OnMooerFrame(const Mooer::RxFrame::Frame& frame)
 		break;
 	case Mooer::RxFrame::EQ:
 		m_mstate.activePreset.equalizer = data_nochk;
+		emit MooerSettingsChanged(frame.group());
 		break;
 	case Mooer::RxFrame::MOD:
+		m_mstate.activePreset.modulation = data_nochk;
+		emit MooerSettingsChanged(frame.group());
 		break;
 	case Mooer::RxFrame::DELAY:
 		break;
@@ -453,8 +474,13 @@ void MooerManager::OnMooerFrame(const Mooer::RxFrame::Frame& frame)
 						.arg(frame.data.size());
 		break;
 	}
-#if DEBUG_LVL > 3
-	qDebug() << std::format("MooerManager: received frame {:04x}, size {}", frame.key, frame.data.size());
+#if DEBUG_LVL > 2
+	if(frame.group() != Mooer::RxFrame::PatchSetting && (data.size() > 20))
+	{
+		int sz = frame.data.size();
+		qDebug() << std::format("MooerManager: received frame {:04x}, size {}", frame.key, frame.data.size());
+		sz++;
+	}
 #endif
 }
 
@@ -539,6 +565,33 @@ void MooerManager::UpdateSettingsView(Mooer::RxFrame::Group group)
 
 	if(group == Mooer::RxFrame::Group::NS_GATE)
 	{
+		auto& ps = preset.noiseGate;
+		WBS(m_ui.cb_ns_enabled)->setChecked(ps.enabled);
+		WBS(m_ui.cb_ns_type)->setCurrentIndex(ps.type - 1);
+		WBS(m_ui.sl_ns_p1)->setValue(ps.attack);
+		WBS(m_ui.sl_ns_p2)->setValue(ps.release);
+		WBS(m_ui.sl_ns_p3)->setValue(ps.thresh);
+	}
+
+	if(group == Mooer::RxFrame::Group::EQ)
+	{
+		auto& ps = preset.equalizer;
+		WBS(m_ui.cb_eq_enabled)->setChecked(ps.enabled);
+		WBS(m_ui.cb_eq_type)->setCurrentIndex(ps.type - 1);
+		WBS(m_ui.s_eq_band1)->setValue(ps.band[0]);
+		WBS(m_ui.s_eq_band2)->setValue(ps.band[1]);
+		WBS(m_ui.s_eq_band3)->setValue(ps.band[2]);
+		WBS(m_ui.s_eq_band4)->setValue(ps.band[3]);
+	}
+
+	if(group == Mooer::RxFrame::Group::MOD)
+	{
+		auto& ps = preset.modulation;
+		WBS(m_ui.cb_mod_enabled)->setChecked(ps.enabled);
+		WBS(m_ui.cb_mod_type)->setCurrentIndex(ps.type - 1);
+		WBS(m_ui.s_mod_p1)->setValue(ps.rate);
+		WBS(m_ui.s_mod_p2)->setValue(ps.level);
+		WBS(m_ui.s_mod_p3)->setValue(ps.depth);
 	}
 }
 

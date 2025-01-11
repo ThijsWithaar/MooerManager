@@ -5,6 +5,7 @@
 #include <cassert>
 #include <cstdint>
 #include <cstring>
+#include <format>
 #include <iostream>
 #include <optional>
 #include <type_traits>
@@ -106,7 +107,7 @@ struct u16be
 		s.lo = v & 0xFF;
 	}
 
-	operator std::uint16_t()
+	operator std::uint16_t() const
 	{
 		return (((std::uint16_t)s.hi) << 8) | s.lo;
 	}
@@ -348,11 +349,16 @@ static_assert(sizeof(Equalizer) == 0x17 - sh);
 
 struct Mod
 {
+	auto& operator=(std::span<const std::uint8_t> s)
+	{
+		return copy(*this, s);
+	}
+
 	u16be enabled, type;
 	u16be rate, level, depth;
-	u16be p4;
+	u16be p4, p5;
 };
-static_assert(sizeof(Mod) == 0x0d - sh);
+static_assert(sizeof(Mod) == 0x0f - sh);
 
 struct Delay
 {
@@ -462,7 +468,7 @@ struct Preset
 	Delay delay;
 	Reverb reverb;
 	Rhythm rhythm;
-	u8 unknown[0x160];
+	u8 unknown[0x15e];
 };
 static_assert(sizeof(Preset) == 0x200);
 
@@ -473,7 +479,7 @@ struct State
 	int activeMenu;
 	AmpModelNames ampModelNames;
 	Preset activePreset;
-	std::array<Mooer::File::PresetPadded, 199> savedPresets;
+	std::array<Mooer::File::PresetPadded, 200> savedPresets;
 };
 
 } // namespace DeviceFormat
@@ -718,18 +724,25 @@ public:
 	{
 		std::array<std::uint8_t, sizeof(DeviceFormat::NS) + 1> msg{RxFrame::Group::NS_GATE, 0};
 		copy(std::span(msg).subspan(1), s);
+		SendWithHeaderAndChecksum(msg);
 	}
 
 	void SetEQ(const DeviceFormat::Equalizer& s)
 	{
 		std::array<std::uint8_t, sizeof(DeviceFormat::Equalizer) + 1> msg{RxFrame::Group::EQ, 0};
 		copy(std::span(msg).subspan(1), s);
+		SendWithHeaderAndChecksum(msg);
 	}
 
 	void SetModulator(const DeviceFormat::Mod& s)
 	{
 		std::array<std::uint8_t, sizeof(DeviceFormat::Mod) + 1> msg{RxFrame::Group::MOD, 0};
+		std::uint16_t type = s.type;
+		if(type >= 22)
+			throw std::runtime_error(std::format("Modulator type {} must be < 21", type));
 		copy(std::span(msg).subspan(1), s);
+		// This makes the GE-200 crash
+		SendWithHeaderAndChecksum(msg);
 	}
 
 private:
