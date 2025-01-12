@@ -24,9 +24,9 @@
 			"name": "vcpkg_macos",
 			"inherits": "release",
 			"cacheVariables": {
-				"CMAKE_CXX_COMPILER": "clang++",
-				"VCPKG_OVERLAY_TRIPLETS": "${sourceDir}/triplets",
-				"CMAKE_TOOLCHAIN_FILE": "$penv{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+				"CMAKE_TOOLCHAIN_FILE": "$penv{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+				"VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "${sourceDir}/cmake/toolchains/osx-llvm18.cmake",
+				"VCPKG_OVERLAY_TRIPLETS": "${sourceDir}/cmake/triplets"
 			}
 		},
 		{
@@ -34,8 +34,8 @@
 			"inherits": "release",
 			"generator": "Visual Studio 17 2022",
 			"cacheVariables": {
-				"VCPKG_OVERLAY_TRIPLETS": "${sourceDir}/triplets",
-				"CMAKE_TOOLCHAIN_FILE": "$penv{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+				"CMAKE_TOOLCHAIN_FILE": "$penv{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+				"VCPKG_OVERLAY_TRIPLETS": "${sourceDir}/triplets"
 			}
 		}
 	],

@@ -8,14 +8,6 @@ debian_add_package(qt6-base-dev libjack-jackd2-dev libpipewire-0.3-dev libusb-1.
 
 project(MooerManager VERSION 0.1 LANGUAGES CXX)
 
-# These should match the VCPKG triplets
-if(DEFINED VCPKG_BUILD_TYPE AND APPLE)
-	# Sequoia's libstdc++ does not have std::jthread and stoptoken
-	set(LLVM_ROOT "/usr/local/opt/llvm\@18")
-	add_compile_options(-nostdinc++ -stdlib=libc++ -I${LLVM_ROOT}/include/c++/v1/ -L${LLVM_ROOT}/lib -Wl,-rpath,${LLVM_ROOT}/lib)
-	add_link_options(-stdlib=libc++ -nodefaultlibs -lc++abi)
-	message("** Using libc++ from ${LLVM_ROOT} **")
-endif()
 
 add_subdirectory(mooer.lib)
 add_subdirectory(mooer.gui)
@@ -27,8 +19,8 @@ if(WIN32)
 elseif(APPLE)
 	set(CPACK_GENERATOR Bundle)
 	set(CPACK_BUNDLE_NAME MooeManager)
-	set(CPACK_BUNDLE_PLIST ${CMAKE_SOURCE_DIR}/MooerManager.plist)
-	set(CPACK_BUNDLE_ICON ${CMAKE_SOURCE_DIR}/appIcon)
+	set(CPACK_BUNDLE_PLIST ${CMAKE_SOURCE_DIR}/mooer.gui/resources/MooerManager.plist)
+	set(CPACK_BUNDLE_ICON ${CMAKE_BINARY_DIR}/AppIcons)
 elseif(UNIX)
 	cmake_host_system_information(RESULT DISTRO QUERY DISTRIB_INFO)
 	if(${DISTRO_ID} STREQUAL "fedora")

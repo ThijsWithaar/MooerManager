@@ -53,31 +53,41 @@ foreach(SVG ${SVGS})
 	add_dependencies(MooerManager create_icon_${SVG_WE})
 endforeach()
 
-function(create_resized_png SVG PTDST WIDTH HEIGHT SUFFIX)
-	add_custom_command(OUTPUT ${PTDST}/${SUFFIX}
-		COMMAND ${MAGICK} -background none ${SVG} -resize ${WIDTH}x${HEIGHT} ${PNG_OUT}
-		COMMENT Generating ${PTDST}/${SUFFIX}
+function(create_resized_png SVG PTDST WIDTH HEIGHT SUFFIX DEPFILE_LIST)
+	set(PNG_OUT "${PTDST}${SUFFIX}.png")
+	add_custom_command(
+		OUTPUT ${PNG_OUT}
 		DEPENDS ${SVG}
+		COMMAND cmake -E make_directory ${PTDST}
+		COMMAND ${MAGICK} -background none ${SVG} -resize ${WIDTH}x${HEIGHT} ${PNG_OUT}
+		COMMENT "Generating ${PNG_OUT}"
 	)
+	list(APPEND ${DEPFILE_LIST} "${PNG_OUT}")
+	set(${DEPFILE_LIST} "${${DEPFILE_LIST}}" PARENT_SCOPE)
+	#return(PROPAGATE ${FILES_OUT})
 endfunction()
 
 function(create_apple_icons SVGIN PTDST)
 	# See https://stackoverflow.com/a/71149490/673137
-	create_resized_png(${SVGIN} ${PTDST} 20 20 "-20x20@1x")
-	create_resized_png(${SVGIN} ${PTDST} 20 20 "-20x20@2x")
-	create_resized_png(${SVGIN} ${PTDST} 60 60 "-20x20@3x")
-	create_resized_png(${SVGIN} ${PTDST} 29 29 "-29x29@1x")
-	create_resized_png(${SVGIN} ${PTDST} 58 58 "-29x29@2x")
-	create_resized_png(${SVGIN} ${PTDST} 87 87 "-29x29@3x")
-	create_resized_png(${SVGIN} ${PTDST} 40 40 "-40x40@1x")
-	create_resized_png(${SVGIN} ${PTDST} 80 80 "-40x40@2x")
-	create_resized_png(${SVGIN} ${PTDST} 120 120"-40x40@3x")
-	create_resized_png(${SVGIN} ${PTDST} 120 120 "-60x60@2x")
-	create_resized_png(${SVGIN} ${PTDST} 180 180 "-60x60@3x")
+	set(FILES_OUT "")
+	create_resized_png(${SVGIN} ${PTDST} 20 20 "-20x20@1x" FILES_OUT)
+	create_resized_png(${SVGIN} ${PTDST} 20 20 "-20x20@2x" FILES_OUT)
+	create_resized_png(${SVGIN} ${PTDST} 60 60 "-20x20@3x" FILES_OUT)
+	create_resized_png(${SVGIN} ${PTDST} 29 29 "-29x29@1x" FILES_OUT)
+	create_resized_png(${SVGIN} ${PTDST} 58 58 "-29x29@2x" FILES_OUT)
+	create_resized_png(${SVGIN} ${PTDST} 87 87 "-29x29@3x" FILES_OUT)
+	create_resized_png(${SVGIN} ${PTDST} 40 40 "-40x40@1x" FILES_OUT)
+	create_resized_png(${SVGIN} ${PTDST} 80 80 "-40x40@2x" FILES_OUT)
+	create_resized_png(${SVGIN} ${PTDST} 120 120 "-40x40@3x" FILES_OUT)
+	create_resized_png(${SVGIN} ${PTDST} 120 120 "-60x60@2x" FILES_OUT)
+	create_resized_png(${SVGIN} ${PTDST} 180 180 "-60x60@3x" FILES_OUT)
 
 	get_filename_component(SVG_WE ${SVGIN} NAME_WE)
-	add_custom_target(create_icon_${SVG_WE} DEPENDS "${PTDST}-20x20@1x" COMMENT "Creating Icon: ${SVG_WE}")
-	add_dependencies(MooerManager create_icon_${SVG_WE})
+	add_custom_target(create_apple_icon_${SVG_WE}
+		DEPENDS ${FILES_OUT}
+	 	COMMENT "Creating Icon: ${SVG_WE}"
+	)
+	add_dependencies(MooerManager create_apple_icon_${SVG_WE})
 endfunction()
 
 if(WIN32)
@@ -94,7 +104,8 @@ if(WIN32)
 	)
 elseif(APPLE)
 	set_target_properties(MooerManager PROPERTIES MACOSX_BUNDLE TRUE)
-	# create_apple_icons(SVG ${CMAKE_CURRENT_BINARY_DIR}/AppIcons)
+	list (GET SVGS 0 SVG)
+	create_apple_icons(${SVG} ${CMAKE_BINARY_DIR}/AppIcons/MooerManager)
 elseif(UNIX)
 	# Desktop shortcut and icon
 	# https://stackoverflow.com/questions/14235798/specify-an-icon-and-menu-entry-for-cmake-cpack-application

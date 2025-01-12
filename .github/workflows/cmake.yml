@@ -17,7 +17,7 @@ jobs:
         include:
           - dockeros: Ubuntu
             container: "thijswithaar/ubuntu:devel"
-            package: "build.release/MooerManager-0.1-ubuntu-noble-x86_64.deb"
+            package: "build.release/MooerManager-0.1-ubuntu-oracular-x86_64.deb"
           - dockeros: Fedora
             container: "thijswithaar/fedora:rawhide"
             package: "build.release/MooerManager-0.1-fedora-rawhide-x86_64.rpm"
@@ -52,13 +52,11 @@ jobs:
 
 
   build-macos:
-    # 15=Sequioa
     # https://github.com/actions/runner-images/blob/main/images/macos/macos-15-Readme.md
-    runs-on: macos-15
-    timeout-minutes: 360 # QT takes a long time to build under vcpkg
+    runs-on: macos-15    # 15=Sequioa
+    timeout-minutes: 120 # QT takes a long time to build under vcpkg
     env:
       VCPKG_ROOT: '${{ github.workspace }}/vcpkg'
-      CMAKE_TOOLCHAIN_FILE: '${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake'
       VCPKG_BINARY_SOURCES: 'clear;files,${{ github.workspace }}/vcpkg.cache,readwrite'
 
     steps:
@@ -68,7 +66,7 @@ jobs:
     - name: Install tools
       # These brew-bottles are already in the image: pkg-config llvm@18
       run: |
-        brew install ninja autoconf automake libtool autoconf-archive imagemagick
+        brew install --quiet ninja autoconf automake libtool autoconf-archive llvm@18 imagemagick
         git clone https://github.com/microsoft/vcpkg ${{ env.VCPKG_ROOT }}
         ${{ env.VCPKG_ROOT }}/bootstrap-vcpkg.sh
 
@@ -76,13 +74,10 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ${{ github.workspace }}/vcpkg.cache
-        key: ${{ runner.os }}-${{ hashFiles('**/vcpkg.json') }}-v2
+        key: ${{ runner.os }}-${{ hashFiles('**/vcpkg.json') }}-${{ hashFiles('**/cmake/triplets/arm64-osx.cmake') }}
 
     - name: Build
-      continue-on-error: true       # VCPKG's qt build can't find Ninja
       run: |
-        eval "$(brew shellenv)"
-        export CMAKE_CXX_COMPILER=$(brew --prefix llvm@18)/bin/clang
         cmake --preset vcpkg_macos
         cmake --build --preset release_macos -- package
 
@@ -95,12 +90,11 @@ jobs:
 
   build-windows:
     runs-on: windows-latest
-    timeout-minutes: 360 # QT takes a long time to build under vcpkg
+    timeout-minutes: 120 # QT takes a long time to build under vcpkg
     env:
       # VCPKG is here, https://github.com/actions/runner-images/blob/main/images/windows/Windows2022-Readme.md#environment-variables
       VCPKG_ROOT: 'C:\vcpkg'
       VCPKG_BINARY_SOURCES: 'clear;files,${{ github.workspace }}\vcpkg.cache,readwrite'
-      CMAKE_TOOLCHAIN_FILE: 'C:\vcpkg\scripts\buildsystems\vcpkg.cmake'
 
     steps:
     - name: Checkout source code
@@ -114,7 +108,7 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ${{ github.workspace }}\vcpkg.cache
-        key: ${{ runner.os }}-${{ hashFiles('**/vcpkg.json') }}
+        key: ${{ runner.os }}-${{ hashFiles('**/vcpkg.json') }}-v2
 
     - name: Build
       run: |
