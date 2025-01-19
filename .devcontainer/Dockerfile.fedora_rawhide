@@ -1,0 +1,28 @@
+FROM fedora:rawhide
+
+# Tools, compiler and libraries
+RUN dnf install -y @development-tools redhat-lsb rpmdevtools nano git cmake ninja-build clang lld \
+		ImageMagick \
+		boost-devel fmt-devel libzip-devel libzip-tools pugixml-devel qt6-qtbase-devel qt6-qttools-devel \
+		libusb1-devel pipewire-devel jack-audio-connection-kit-devel \
+		flac-devel opus-devel soxr-devel && \
+	dnf clean dbcache && \
+	ln -fs /usr/bin/clang /usr/bin/cc && \
+	ln -fs /usr/bin/clang++ /usr/bin/c++
+
+# Catch2 is not yet in a repo, so build+install ourselves
+RUN git clone --depth=1 -b v3.8.0 https://github.com/catchorg/Catch2.git /tmp/catch2 && \
+	cmake -S/tmp/catch2 -B/tmp/catch2.build -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=/usr && \
+	cmake --build /tmp/catch2.build -- install && \
+	rm -rf /tmp/catch2*
+
+# Match user/group of the travis CI, so volumes show up with correct rights
+RUN groupadd -g 2000 travis && useradd -g travis -u 2000 travis && echo "travis:travis" | chpasswd
+RUN mkdir -p /home/travis && chown -R travis:travis /home/travis && usermod -aG wheel travis
+
+# And one that matches the first user of a debian system
+RUN groupadd -g 1000 me && useradd -g me -u 1000 me && echo "me:me" | chpasswd
+RUN mkdir -p /home/me && chown -R me:me /home/me && usermod -aG wheel me
+
+#WORKDIR /home/me
+#USER me

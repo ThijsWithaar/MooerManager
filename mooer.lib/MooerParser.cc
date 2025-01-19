@@ -1,5 +1,6 @@
 #include <cstdint>
 
+#include <bit>
 #include <ranges>
 #include <span>
 #include <utility>
@@ -9,7 +10,7 @@
 #include <WaveFile.h>
 
 
-#define PARSER_DEBUG_LVL 3
+// #define PARSER_DEBUG_LVL 3
 #ifdef PARSER_DEBUG_LVL
 #include <format>
 #endif
@@ -54,7 +55,11 @@ File::Mbf LoadBackup(std::span<const std::uint8_t> mbfData)
 {
 	using namespace std::literals;
 	if(mbfData.size() <= sizeof(File::Mbf))
-		throw std::runtime_error(std::format("MBF must be at least {} bytes\n", sizeof(File::Mbf)));
+	{
+		std::stringstream ss;
+		ss << "MBF must be at least " << sizeof(File::Mbf) << " bytes\n";
+		throw std::runtime_error(ss.str());
+	}
 
 	auto mbf = reinterpret_cast<const File::Mbf*>(mbfData.data());
 	if(std::string_view(mbf->manufacturer) != "MOOER"sv)
@@ -66,6 +71,11 @@ File::Mbf LoadBackup(std::span<const std::uint8_t> mbfData)
 
 //-- Parser --
 
+enum class AmpKind : std::uint8_t
+{
+	amp = 0x05,
+	gnr = 0x15
+};
 
 void Parser::LoadAmplifier(std::span<std::uint8_t> amp, std::string_view name, int slot)
 {
@@ -80,7 +90,7 @@ void Parser::LoadAmplifier(std::span<std::uint8_t> amp, std::string_view name, i
 	packetData[4] = RxFrame::Group::AmpUpload; // 0xE2;
 	packetData[5] = slot;
 	// packetData[6] = index;
-	packetData[7] = 0x05;
+	packetData[7] = std::bit_cast<std::uint8_t>(AmpKind::amp);
 
 	const int iData = 8;
 	const int iChecksum = iData + 512;
@@ -103,6 +113,46 @@ void Parser::LoadAmplifier(std::span<std::uint8_t> amp, std::string_view name, i
 	std::fill(begin(packetData) + iData, end(packetData), 0);
 	std::copy(begin(name), begin(name) + std::min<int>(name.size(), 15), begin(packetData) + iData);
 	SendWithHeaderAndChecksum(std::span(packetData).subspan(4, 0x13));
+}
+
+
+void Parser::LoadGNR(std::span<std::uint8_t> gnrData, std::string_view name, int slot)
+{
+	if(gnrData.size() < sizeof(File::GNR))
+		throw std::runtime_error("GNR too small in size");
+	auto gnr = reinterpret_cast<const File::GNR*>(gnrData.data());
+
+	assert(std::string_view(&gnr->manufacturer[0]) == "mooerge");
+	assert(std::string_view(&gnr->infoId[0], 4) == "info");
+	assert(std::string_view(&gnr->dataId[0], 4) == "data");
+
+	auto ampData = gnr->dataSpan();
+	/* LoadAmplifier(), with nBytesPerWord = 20, AmpKind::gnr
+	ControlOut bmRequestType 0x21, data fragment 00
+	ControlOut bmRequestType 0x21, data fragment 000c
+	ControlOut bmRequestType 0x21, data fragment 000c
+	ControlOut bmRequestType 0x21, data fragment 00
+	ControlOut bmRequestType 0x21, data fragment 00ec
+	ControlOut bmRequestType 0x21, data fragment 00ec
+	bmRequestType:00, SetInterface(0x0B), alternate 1: itf 2, len 0
+	ISO Out: data 0xa56/2646, 10 packets, all zeros
+	bmRequestType:00, SetInterface(0x0B), alternate 0, itf 2, len 0
+	*/
+	const std::array<std::uint8_t, 1> m0{0x00};
+	const std::array<std::uint8_t, 2> mc{0x00, 0x0C};
+	const std::array<std::uint8_t, 2> mec{0x00, 0xEC};
+	m_connection->control_transfer(0x21, 1, 1, 2, m0);
+	m_connection->control_transfer(0x21, 1, 0x102, 2, mc);
+	m_connection->control_transfer(0x21, 1, 0x202, 2, mc);
+
+	m_connection->control_transfer(0x21, 1, 1, 5, m0);
+	m_connection->control_transfer(0x21, 1, 0x102, 5, mec);
+	m_connection->control_transfer(0x21, 1, 0x202, 5, mec);
+
+	m_connection->set_interface(2, 1);
+	std::vector<std::uint8_t> bulk(2646, 0);
+	m_connection->bulk_transfer(m_tx_bulk_endpoint, bulk);
+	m_connection->set_interface(2, 0);
 }
 
 

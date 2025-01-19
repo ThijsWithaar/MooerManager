@@ -1,3 +1,5 @@
+set(TARGET_NAME MooerManager)
+
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
@@ -7,15 +9,15 @@ file(GLOB HEADERS CONFIGURE_DEPENDS *.h)
 file(GLOB SOURCES CONFIGURE_DEPENDS *.cc)
 file(GLOB QTUI CONFIGURE_DEPENDS *.ui)
 
-qt_add_executable(MooerManager ${HEADERS} ${SOURCES} ${QTUI})
+qt_add_executable(${TARGET_NAME} ${HEADERS} ${SOURCES} ${QTUI})
 
-target_link_libraries(MooerManager PUBLIC
+target_link_libraries(${TARGET_NAME} PUBLIC
 	MooerLib
 	Qt::Widgets
 	Qt::Network
 )
 
-install(TARGETS MooerManager DESTINATION bin COMPONENT gui)
+install(TARGETS ${TARGET_NAME} DESTINATION bin COMPONENT gui)
 
 file(GLOB fnMagicWin "C:/Program Files/ImageMagick8/magick.exe")
 get_filename_component(ptMagicWin "${fnMagicWin}" DIRECTORY)
@@ -50,7 +52,7 @@ foreach(SVG ${SVGS})
 
 	set(FILES_OUT ${PNG_OUT} ${ICO_OUT} ${SVG_OUT})
 	add_custom_target(create_icon_${SVG_WE} DEPENDS ${FILES_OUT})
-	add_dependencies(MooerManager create_icon_${SVG_WE})
+	add_dependencies(${TARGET_NAME} create_icon_${SVG_WE})
 endforeach()
 
 function(create_resized_png SVG PTDST WIDTH HEIGHT SUFFIX DEPFILE_LIST)
@@ -63,8 +65,7 @@ function(create_resized_png SVG PTDST WIDTH HEIGHT SUFFIX DEPFILE_LIST)
 		COMMENT "Generating ${PNG_OUT}"
 	)
 	list(APPEND ${DEPFILE_LIST} "${PNG_OUT}")
-	set(${DEPFILE_LIST} "${${DEPFILE_LIST}}" PARENT_SCOPE)
-	#return(PROPAGATE ${FILES_OUT})
+	return(PROPAGATE ${DEPFILE_LIST})
 endfunction()
 
 function(create_apple_icons SVGIN PTDST)
@@ -87,7 +88,7 @@ function(create_apple_icons SVGIN PTDST)
 		DEPENDS ${FILES_OUT}
 	 	COMMENT "Creating Icon: ${SVG_WE}"
 	)
-	add_dependencies(MooerManager create_apple_icon_${SVG_WE})
+	add_dependencies(${TARGET_NAME} create_apple_icon_${SVG_WE})
 endfunction()
 
 if(WIN32)
@@ -103,7 +104,7 @@ if(WIN32)
 		FILES_MATCHING PATTERN "*.dll" PATTERN "*.conf"
 	)
 elseif(APPLE)
-	set_target_properties(MooerManager PROPERTIES MACOSX_BUNDLE TRUE)
+	set_target_properties(${TARGET_NAME} PROPERTIES MACOSX_BUNDLE TRUE)
 	list (GET SVGS 0 SVG)
 	create_apple_icons(${SVG} ${CMAKE_BINARY_DIR}/AppIcons/MooerManager)
 elseif(UNIX)

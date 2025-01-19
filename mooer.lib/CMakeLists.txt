@@ -1,15 +1,21 @@
 
+debian_add_package(libfmt-dev libzip-dev zipcmp zipmerge ziptool libpugixml-dev)
+
 if(DEFINED CMAKE_TOOLCHAIN_FILE)
 	find_package(PkgConfig REQUIRED)
 	pkg_check_modules(libusb REQUIRED IMPORTED_TARGET libusb-1.0)
 else()
 	find_package(libusb REQUIRED)
 endif()
+
 if(UNIX AND NOT APPLE)
 	find_package(pipewire REQUIRED)
 	find_package(jack)
 endif()
 
+find_package(fmt REQUIRED)
+find_package(libzip CONFIG REQUIRED)
+find_package(PugiXML REQUIRED)
 
 file(GLOB HEADERS CONFIGURE_DEPENDS *.h)
 file(GLOB SOURCES CONFIGURE_DEPENDS *.cc)
@@ -34,6 +40,8 @@ target_compile_features(MooerLib PUBLIC cxx_std_20)
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 	# std::jthread is still expirimental
 	target_compile_options(MooerLib PUBLIC "-fexperimental-library" "-Wno-invalid-offsetof")
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+	target_compile_options(MooerLib PUBLIC "-Wno-invalid-offsetof")
 endif()
 
 target_include_directories(MooerLib PUBLIC
@@ -43,14 +51,20 @@ target_include_directories(MooerLib PUBLIC
 
 set_target_properties(MooerLib PROPERTIES PUBLIC_HEADER "${HEADERS}")
 
-target_link_libraries(MooerLib PRIVATE ${LIBUSB_LIBRARIES})
+target_link_libraries(MooerLib PRIVATE
+	fmt::fmt
+	pugixml::pugixml
+	${LIBUSB_LIBRARIES}
+	libzip::zip
+)
 if(UNIX AND NOT APPLE)
 	target_link_libraries(MooerLib
 		PUBLIC 
 			LIBUSB::LIBUSB
+			Pipewire::Spa
 		PRIVATE
 			Jack::Jack
-			Pipewire::Pipewire Pipewire::Spa
+			Pipewire::Pipewire
 	)
 endif()
 if(DEFINED CMAKE_TOOLCHAIN_FILE)

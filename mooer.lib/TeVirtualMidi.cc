@@ -74,25 +74,11 @@ BOOL CALLBACK virtualMIDISendData(LPVM_MIDI_PORT midiPort, LPBYTE midiDataBytes,
 }
 
 
+#include <TeVirtualMidi.h>
+
+
 namespace TeVirtualMidi
 {
-
-
-class MooerMidiControl
-{
-public:
-	MooerMidiControl(std::wstring portName);
-
-	~MooerMidiControl();
-
-private:
-	static void on_read(LPVM_MIDI_PORT midiPort, LPBYTE midiDataBytes, DWORD length, DWORD_PTR dwCallbackInstance);
-
-	void OnRead(LPVM_MIDI_PORT midiPort, std::span<std::byte> midiData);
-
-	VM_MIDI_PORT* m_port;
-	std::array<std::byte, 512> m_sysex_buffer;
-};
 
 
 MooerMidiControl::MooerMidiControl(std::wstring portName)

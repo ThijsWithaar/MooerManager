@@ -64,8 +64,10 @@ public:
 };
 
 
-TransferListener::TransferListener()
-	: m_transfer(libusb_alloc_transfer(0)), m_continue(true)
+TransferListener::TransferListener(int nWritePackets)
+	: m_read_transfer(libusb_alloc_transfer(0))
+	, m_bulk_write_transfer(libusb_alloc_transfer(nWritePackets))
+	, m_continue(true)
 {
 }
 
@@ -74,18 +76,27 @@ TransferListener::~TransferListener()
 {
 	m_continue = false;
 	std::cout << "TransferListener::~TransferListener" << std::endl;
-	CheckedLibUsb rc = libusb_cancel_transfer(m_transfer);
-	libusb_free_transfer(m_transfer);
-	m_transfer = nullptr;
+	CheckedLibUsb rcw = libusb_cancel_transfer(m_bulk_write_transfer);
+	libusb_free_transfer(m_bulk_write_transfer);
+
+	CheckedLibUsb rcr = libusb_cancel_transfer(m_read_transfer);
+	libusb_free_transfer(m_read_transfer);
+	m_read_transfer = nullptr;
 }
 
 
 void TransferListener::Connect(libusb_device_handle* device, unsigned char endpoint)
 {
 	const unsigned int timeout = 0;
-	libusb_fill_interrupt_transfer(
-		m_transfer, device, endpoint, m_buffer.data(), m_buffer.size(), &TransferListener::data_transfer_cb, this, 0);
-	CheckedLibUsb rc = libusb_submit_transfer(m_transfer);
+	libusb_fill_interrupt_transfer(m_read_transfer,
+								   device,
+								   endpoint,
+								   m_buffer.data(),
+								   m_buffer.size(),
+								   &TransferListener::data_transfer_cb,
+								   this,
+								   0);
+	CheckedLibUsb rc = libusb_submit_transfer(m_read_transfer);
 }
 
 
@@ -96,7 +107,7 @@ void TransferListener::data_transfer_cb(libusb_transfer* tf)
 		self->OnUsbInterruptData(std::span<std::uint8_t>(self->m_buffer));
 	if(!self->m_continue)
 		return;
-	CheckedLibUsb rc = libusb_submit_transfer(self->m_transfer); // Start the next read
+	CheckedLibUsb rc = libusb_submit_transfer(self->m_read_transfer); // Start the next read
 }
 
 
@@ -242,10 +253,7 @@ void Connection::RunEventLoop()
 	int completed = 0;
 	while((!st.stop_requested()) && (libusb_event_handling_ok(m_ctx)) && (!completed))
 	{
-		struct timeval tv
-		{
-			1, 0
-		};
+		struct timeval tv{1, 0};
 		/*if(libusb_try_lock_events(m_ctx) == 0)
 		{
 			libusb_handle_events_locked(m_ctx, &tv);
@@ -284,6 +292,39 @@ std::span<std::uint8_t> Connection::interrupt_transfer(unsigned char endpoint, s
 	}
 	return data.subspan(0, dsize);
 }
+
+
+void Connection::control_transfer(
+	uint8_t request_type, uint8_t request, int16_t wValue, uint16_t wIndex, std::span<const std::uint8_t> data)
+{
+	int timeout_ms = 0;
+	auto pData = const_cast<std::uint8_t*>(data.data());
+	int rx = libusb_control_transfer(m_device, request_type, request, wValue, wIndex, pData, data.size(), timeout_ms);
+	if((timeout_ms == 0) || (rx != LIBUSB_ERROR_TIMEOUT))
+	{
+		CheckedLibUsb rtx(rx);
+	}
+}
+
+
+void Connection::bulk_transfer(unsigned char endpoint, std::span<const std::uint8_t> data)
+{
+	int timeout_ms = 0;
+	int actual_length = 0;
+	auto pData = const_cast<std::uint8_t*>(data.data());
+	int rx = libusb_bulk_transfer(m_device, endpoint, pData, data.size(), &actual_length, timeout_ms);
+	if((timeout_ms == 0) || (rx != LIBUSB_ERROR_TIMEOUT))
+	{
+		CheckedLibUsb rtx(rx);
+	}
+}
+
+
+void Connection::set_interface(int interface_number, int alternate_setting)
+{
+	CheckedLibUsb rx = libusb_set_interface_alt_setting(m_device, interface_number, alternate_setting);
+}
+
 
 
 } // namespace USB

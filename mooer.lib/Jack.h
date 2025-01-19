@@ -9,12 +9,14 @@
 namespace Jack
 {
 
-class MooerMidiControl : public MIDI::Sink
+class MooerMidiControl : public MIDI::Interface
 {
 public:
 	MooerMidiControl(std::string_view name, MIDI::Callback* callback = nullptr);
 
-	~MooerMidiControl();
+	MooerMidiControl(jack_client_t* client, MIDI::Callback* callback);
+
+	~MooerMidiControl() override;
 
 	void ControlChange(std::uint8_t channel, MIDI::ControlChange controller, std::uint8_t value) override;
 
@@ -31,7 +33,6 @@ private:
 	jack_client_t* m_client;
 	jack_port_t* m_port;
 
-	MIDI::Callback* m_callback;
 	std::array<std::uint8_t, 32> m_txbuf;
 };
 

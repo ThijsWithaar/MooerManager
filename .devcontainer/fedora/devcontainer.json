@@ -1,6 +1,7 @@
 {
 	"name" : "Fedora Rawhide",
-	"image": "thijswithaar/fedora:rawhide",
+	"dockerFile": "../Dockerfile.fedora_rawhide",
+	//"image": "thijswithaar/fedora:rawhide",
 	"containerEnv": {
     	"DEVCONTAINER_NAME": "fedora"
 	},

@@ -1,4 +1,4 @@
-![CMake build](https://github.com/ThijsWithaar/MooerManager/actions/workflows/cmake.yml/badge.svg)
+[![CMake build](https://github.com/ThijsWithaar/MooerManager/actions/workflows/cmake.yml/badge.svg)](https://github.com/ThijsWithaar/MooerManager/actions)
 
 # Summary
 

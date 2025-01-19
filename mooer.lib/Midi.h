@@ -3,8 +3,11 @@
 #include <array>
 #include <bit>
 #include <cstdint>
+#include <memory>
 #include <span>
 #include <vector>
+#include <string_view>
+
 
 /**
 Definition of the MIDI protocol
@@ -101,14 +104,16 @@ static auto CreateProgramChange(std::uint8_t channel, std::uint8_t value)
 	return std::array<std::uint8_t, 3>{Message::ProgramChange | channel, value, 0};
 }
 
-static auto CreateSysex(std::uint8_t channel, Manufacturer manufacturer, std::span<std::uint8_t> data)
+static void CreateSysex(std::vector<std::uint8_t>& dst,
+						std::uint8_t channel,
+						Manufacturer manufacturer,
+						std::span<std::uint8_t> data)
 {
-	std::vector<std::uint8_t> r(data.size() + 3);
-	r[0] = Message::SysexStart | channel;
-	r[1] = std::bit_cast<std::uint8_t>(manufacturer);
-	std::copy(std::begin(data), std::end(data), std::begin(r) + 2);
-	r.back() = Message::SysexEnd | 0;
-	return r;
+	dst.resize(data.size() + 3);
+	dst[0] = Message::SysexStart | channel;
+	dst[1] = std::bit_cast<std::uint8_t>(manufacturer);
+	std::copy(std::begin(data), std::end(data), std::begin(dst) + 2);
+	dst.back() = Message::SysexEnd | 0;
 }
 
 /// The default implementation for each message is to do nothing
@@ -123,9 +128,25 @@ public:
 class Sink
 {
 public:
+	virtual ~Sink() = default;
+
 	virtual void ControlChange(std::uint8_t channel, ControlChange controller, std::uint8_t value) {};
 	virtual void ProgramChange(std::uint8_t channel, std::uint8_t value) {};
 	virtual void Sysex(std::uint8_t channel, Manufacturer manufacturer, std::span<std::uint8_t> value) {};
+};
+
+/// Base class for anything that wants to send (via Sink) and receive (via Callback) MIDI
+class Interface : public Sink
+{
+public:
+	Interface(Callback* callback);
+
+	static std::unique_ptr<Interface> Create(std::string_view name, MIDI::Callback* callback);
+
+	virtual ~Interface() = default;
+
+protected:
+	Callback* m_callback;
 };
 
 class Parser

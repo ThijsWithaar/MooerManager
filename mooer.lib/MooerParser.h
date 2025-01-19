@@ -5,22 +5,25 @@
 #include <cassert>
 #include <cstdint>
 #include <cstring>
-#include <format>
 #include <iostream>
 #include <optional>
+#include <sstream>
 #include <type_traits>
 
 #include <UsbConnection.h>
 
-// #define PARSER_DEBUG_LVL 3
 
+// #define PARSER_DEBUG_LVL 3
+#ifdef PARSER_DEBUG_LVL
+#include <format>
+#endif
 
 namespace Mooer
 {
 
 
 template<typename T>
-concept PODType = std::is_pod<T>::value;
+concept PODType = std::is_standard_layout_v<T> && std::is_trivial_v<T>;
 
 template<typename T>
 concept StandardLayoutType = std::is_standard_layout_v<T>;
@@ -242,6 +245,26 @@ static_assert(offsetof(Mbf, presets) == 0x650);
 /// Load a backup from an .mbf file
 Mbf LoadBackup(std::span<const std::uint8_t> mbf);
 
+/// Header for a .gnr amplifier/cabinet response
+struct GNR
+{
+	std::array<char, 8> manufacturer; // "mooerge"
+	std::uint32_t infoSize;
+	std::array<char, 4> infoId; // "info"
+	char info[0x3C];
+
+	std::array<char, 4> dataId; // "data"
+	std::uint32_t dataSize;
+	std::uint8_t data[];
+
+	auto dataSpan() const
+	{
+		return std::span<const std::uint8_t>(&data[0], dataSize);
+	};
+};
+static_assert(offsetof(GNR, dataId) == 0x4C);
+static_assert(sizeof(GNR) == 0x54);
+
 
 } // namespace File
 
@@ -362,6 +385,11 @@ static_assert(sizeof(Mod) == 0x0f - sh);
 
 struct Delay
 {
+	auto& operator=(std::span<const std::uint8_t> s)
+	{
+		return copy(*this, s);
+	}
+
 	u16be enabled, type;
 	u16be level, fback, time, subd;
 	u16be p5, p6;
@@ -370,6 +398,11 @@ static_assert(sizeof(Delay) == 0x11 - sh);
 
 struct Reverb
 {
+	auto& operator=(std::span<const std::uint8_t> s)
+	{
+		return copy(*this, s);
+	}
+
 	u16be enabled, type;
 	std::array<u16be, 4> p;
 };
@@ -379,8 +412,7 @@ struct Rhythm
 {
 	auto& operator=(std::span<const std::uint8_t> s)
 	{
-		copy(*this, s);
-		return *this;
+		return copy(*this, s);
 	}
 
 	u16be bpm;
@@ -477,7 +509,7 @@ struct State
 {
 	int activePresetIndex;
 	int activeMenu;
-	AmpModelNames ampModelNames;
+	AmpModelNames ampModelNames, cabModelNames;
 	Preset activePreset;
 	std::array<Mooer::File::PresetPadded, 200> savedPresets;
 };
@@ -499,14 +531,17 @@ public:
 		Identify = 0x10,
 		PedalAssignment = 0xA3,
 		PatchAlternate = 0xA4, ///< Send when pressing CTRL TAP
-		PatchSetting = 0xA5,
+		PatchSetting = 0xA5,   ///< One patch entry of a group
 		ActivePatch = 0xA6,
+		StorePatch = 0xA8,
+		ActivePatchSetting = 0xA9, ///< 200 bytes of the active patch
 		CabinetUpload = 0xE1,
 		AmpUpload = 0xE2, ///< Upload index received/request?
 		AmpModels = 0xE3, ///< Names of the custom amp models (bank 56 and up)
+		CabModels = 0x85, ///< Names of the custom cab models
 		Menu = 0x82,	  ///< The currently active menu on the display
 		Preset = 0x83,
-		PedalAssignment_Maybe = 0x84,
+		PedalAssignment_Maybe = 0x84, ///< FW version, model name?
 		FX = 0x90,
 		DS_OD = 0x91,
 		AMP = 0x93,
@@ -654,6 +689,16 @@ public:
 		// std::array<std::uint8_t, 12> msg2{11, 0xAA, 0x55, 0x05, 0x00, 0x82, 0x00, 0x00, 0x00, 0x00, 0xE0, 0x0B};
 	}
 
+	/// Download preset from device.
+	/// \p idx: zero-based patch
+	/// \p name: max. 15 characters
+	void StorePreset(int idx, std::string_view name)
+	{
+		std::array<std::uint8_t, 0x11> msg{RxFrame::Group::StorePatch, 0xA5};
+		std::strncpy((char*)(&msg[2]), name.data(), std::min<int>(name.size(), 0x11 - 2));
+		SendWithHeaderAndChecksum(msg);
+	}
+
 	/** Switch the menu that's shown on the display
 	FX=1, OD=2, Amp=3, Cab=4
 	*/
@@ -681,6 +726,15 @@ public:
 	/p slot: The slot index into which to load
 	 */
 	void LoadAmplifier(std::span<std::uint8_t> amp, std::string_view name, int slot);
+
+	/*
+	Load and amplifier/speaker/microphone model in GNR format.
+	This is the succesor to the .amp format
+
+	/p gnr: The contents of a .gnr file
+	/p name: The name on the display
+	*/
+	void LoadGNR(std::span<std::uint8_t> gnr, std::string_view name, int slot);
 
 	/**
 	Load a .wav file into a Cabinet slot
@@ -739,11 +793,17 @@ public:
 		std::array<std::uint8_t, sizeof(DeviceFormat::Mod) + 1> msg{RxFrame::Group::MOD, 0};
 		std::uint16_t type = s.type;
 		if(type >= 22)
-			throw std::runtime_error(std::format("Modulator type {} must be < 21", type));
+		{
+			std::stringstream ss;
+			ss << "Modulator type " << type << " must be < 21";
+			throw std::runtime_error(ss.str());
+		}
 		copy(std::span(msg).subspan(1), s);
 		// This makes the GE-200 crash
 		SendWithHeaderAndChecksum(msg);
 	}
+
+
 
 private:
 	void SendWithHeaderAndChecksum(std::span<const std::uint8_t> m);
@@ -758,6 +818,7 @@ private:
 		return {reinterpret_cast<const char*>(buf.data()), buf.size()};
 	}
 
+	constexpr static int m_tx_bulk_endpoint = 0x01;
 	constexpr static int m_tx_endpoint = 0x02;
 	constexpr static int m_rx_endpoint = 0x81;
 

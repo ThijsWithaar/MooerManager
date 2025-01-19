@@ -8,7 +8,10 @@
 #include <pipewire/pipewire.h>
 
 #include <spa/control/control.h>
-#include <spa/pod/builder.h>
+
+
+
+#include "Pipewire.h"
 
 
 namespace PipeWire
@@ -33,28 +36,6 @@ private:
 };
 
 
-class MooerMidiControl
-{
-public:
-	MooerMidiControl();
-
-	~MooerMidiControl();
-
-	void OnProcess(struct spa_io_position* position);
-
-	void OnSignal(int signal_number);
-
-	static void on_process(void* userdata, struct spa_io_position* position);
-
-private:
-	static void do_quit(void* userdata, int signal_number);
-
-
-	struct pw_main_loop* m_loop;
-	struct pw_filter* m_filter;
-	struct port* m_InputPort;
-};
-
 
 const char* g_opt_remote = "mooer_remote_name";
 
@@ -65,7 +46,11 @@ static const struct pw_filter_events g_filter_events = {
 };
 
 
-MooerMidiControl::MooerMidiControl()
+//-- MooerMidiControl --
+
+
+MooerMidiControl::MooerMidiControl(std::string_view name, MIDI::Callback* callback)
+	: MIDI::Interface(callback)
 {
 	int argc = 0;
 	char** argv = nullptr;
@@ -79,7 +64,7 @@ MooerMidiControl::MooerMidiControl()
 	// pw_loop_add_signal(pw_main_loop_get_loop(m_loop), SIGTERM, do_quit, data);
 
 	m_filter = pw_filter_new_simple(pw_main_loop_get_loop(m_loop),
-									"mooer-midi",
+									name.data(),
 									pw_properties_new(PW_KEY_REMOTE_NAME,
 													  g_opt_remote,
 													  PW_KEY_MEDIA_TYPE,
@@ -149,7 +134,7 @@ void MooerMidiControl::OnProcess(struct spa_io_position* position)
 
 		ev.track = 0;
 		ev.sec = (frame + c->offset) / (float)position->clock.rate.denom;
-		ev.data = SPA_POD_BODY(&c->value), ev.size = SPA_POD_BODY_SIZE(&c->value);
+		ev.data = SPA_POD_BODY(&c->value); ev.size = SPA_POD_BODY_SIZE(&c->value);
 		ev.type = MIDI_EVENT_TYPE_UMP;
 
 		// ToDo: Convert MIDI CC commands to MOOER patch changes
@@ -170,6 +155,46 @@ void MooerMidiControl::do_quit(void* userdata, int signal_number)
 void MooerMidiControl::OnSignal(int signal_number)
 {
 	pw_main_loop_quit(m_loop);
+}
+
+
+void MooerMidiControl::ControlChange(std::uint8_t channel, MIDI::ControlChange controller, std::uint8_t value)
+{
+	auto buf = MIDI::CreateControlChange(channel, controller, value);
+	SendMidi(0, buf);
+}
+
+
+void MooerMidiControl::ProgramChange(std::uint8_t channel, std::uint8_t value)
+{
+	auto buf = MIDI::CreateProgramChange(channel, value);
+	SendMidi(0, buf);
+}
+
+
+void MooerMidiControl::Sysex(std::uint8_t channel, MIDI::Manufacturer manufacturer, std::span<std::uint8_t> values)
+{
+	MIDI::CreateSysex(m_sysexBuffer, channel, manufacturer, values);
+	SendMidi(0, m_sysexBuffer);
+}
+
+
+void MooerMidiControl::SendMidi(uint64_t sample_offset, std::span<const std::uint8_t> data)
+{
+	// Following https://docs.pipewire.org/midi-src_8c-example.html
+	struct spa_pod_frame frame;
+	struct pw_buffer* buf = nullptr;
+	if((buf = pw_filter_dequeue_buffer(m_InputPort)) == NULL)
+		return;
+
+	spa_pod_builder_init(&m_builder, const_cast<std::uint8_t*>(data.data()), data.size());
+	spa_pod_builder_push_sequence(&m_builder, &frame, 0);
+
+	spa_pod_builder_control(&m_builder, sample_offset, SPA_CONTROL_Midi);
+	spa_pod_builder_bytes(&m_builder, data.data(), data.size());
+
+	spa_pod_builder_pop(&m_builder, &frame);
+	pw_filter_queue_buffer(m_InputPort, buf);
 }
 
 

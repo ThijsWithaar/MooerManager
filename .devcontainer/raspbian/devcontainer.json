@@ -1,0 +1,19 @@
+{
+	"name" : "Raspbian",
+	"build": {
+		"dockerfile": "../Dockerfile.raspbian",
+		"options": ["--platform=linux/arm64/v8"],
+		"cacheFrom": "type=registry,ref=thijswithaar/raspbian:bookworm"
+	},
+	"containerEnv": {
+		"DEBIAN_FRONTEND": "noninteractive",
+    	"DEVCONTAINER_NAME": "raspbian"
+	},
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-vscode.cpptools-extension-pack"
+			]
+		}
+	}
+}

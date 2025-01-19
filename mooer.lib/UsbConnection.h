@@ -24,7 +24,7 @@ public:
 class TransferListener
 {
 public:
-	TransferListener();
+	TransferListener(int nWritePackets = 10);
 
 	virtual ~TransferListener();
 
@@ -40,7 +40,7 @@ private:
 	static void data_transfer_cb(libusb_transfer* tf);
 
 	std::array<std::uint8_t, 64> m_buffer;
-	libusb_transfer* m_transfer;
+	libusb_transfer *m_read_transfer, *m_bulk_write_transfer;
 	bool m_continue;
 };
 
@@ -61,6 +61,13 @@ public:
 	void StartEventLoop();
 
 	std::span<std::uint8_t> interrupt_transfer(unsigned char endpoint, std::span<std::uint8_t> data);
+
+	void control_transfer(
+		uint8_t request_type, uint8_t request, int16_t wValue, uint16_t wIndex, std::span<const std::uint8_t> data);
+
+	void bulk_transfer(unsigned char endpoint, std::span<const std::uint8_t> data);
+
+	void set_interface(int interface_number, int alternate_setting);
 
 	void Connect(TransferListener* listener, unsigned char endpoint);
 

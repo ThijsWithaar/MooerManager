@@ -9,8 +9,7 @@
 #include <UsbConnection.h>
 
 #ifdef __linux__
-#include <Jack.h>
-// #define MOOER_HAS_MIDI
+#define MOOER_HAS_MIDI
 #endif
 
 
@@ -69,7 +68,7 @@ private:
 	bool m_need_patches;
 	Mooer::Listener::Identity m_device_id;
 	Mooer::DeviceFormat::State m_mstate; // Device state
-#if defined(MOOER_HAS_MIDI) and defined(__linux__)
-	Jack::MooerMidiControl m_midi;
+#if defined(MOOER_HAS_MIDI)
+	std::unique_ptr<MIDI::Interface> m_midi;
 #endif
 };

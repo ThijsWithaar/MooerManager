@@ -35,7 +35,7 @@
 			"generator": "Visual Studio 17 2022",
 			"cacheVariables": {
 				"CMAKE_TOOLCHAIN_FILE": "$penv{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
-				"VCPKG_OVERLAY_TRIPLETS": "${sourceDir}/triplets"
+				"VCPKG_OVERLAY_TRIPLETS": "${sourceDir}/cmake/triplets"
 			}
 		}
 	],

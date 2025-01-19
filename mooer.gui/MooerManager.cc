@@ -6,10 +6,22 @@
 #include <QFileDialog>
 
 
-#define DEBUG_LVL 3
+//#define DEBUG_LVL 3
 
 
-const QString ptFileOpen = "/home/thijs/gitrepo/mooer/traces";
+const QString ptFileOpen = "";
+
+bool ichar_equals(char a, char b)
+{
+	return std::tolower(a) == std::tolower(b);
+}
+
+
+bool iequals(const std::string& a, const std::string& b)
+{
+	return std::equal(a.begin(), a.end(), b.begin(), b.end(), ichar_equals);
+}
+
 
 template<class Object>
 	requires(std::derived_from<Object, QObject>)
@@ -52,7 +64,7 @@ MooerManager::MooerManager(QWidget* parent)
 	, m_mooer(&m_usb, this)
 	, m_need_patches(true)
 #ifdef MOOER_HAS_MIDI
-	, m_midi("MooerManager", this)
+	, m_midi(MIDI::Interface::Create("MooerManager", this))
 #endif
 {
 	m_ui.setupUi(this);
@@ -126,7 +138,7 @@ MooerManager::MooerManager(QWidget* parent)
 			if(patchIndex < maxPatchIdx)
 			{
 				int pct = (patchIndex * 100) / 199;
-				auto msg = QString("Downloading settings: %1\%").arg(pct);
+				auto msg = QString("Downloading settings: %1%%").arg(pct);
 				m_ui.statusbar->showMessage(msg);
 			}
 			else
@@ -236,25 +248,6 @@ void MooerManager::ConnectAmplifier()
 }
 
 
-void MooerManager::OnAmpLoad()
-{
-	int amp_idx = m_ui.cb_amp_type->currentIndex();
-	int slot_idx = amp_idx - 55;
-	if(slot_idx < 0)
-		return;
-
-	// std::string fnAmp = "/home/thijs/gitrepo/mooer/traces/CALI DUAL 1.amp";
-	auto fileName = QFileDialog::getOpenFileName(this, tr("Open Amplifier"), ptFileOpen, tr("AMP Files (*.amp)"));
-	std::filesystem::path fnAmp = fileName.toStdString();
-
-	std::string name = std::filesystem::path(fnAmp).stem().string();
-	auto ampData = ReadFile(fnAmp);
-	m_mooer.LoadAmplifier(ampData, name, slot_idx);
-	m_mstate.ampModelNames.set(slot_idx, name);
-	emit MooerSettingsChanged(Mooer::RxFrame::AMP);
-}
-
-
 void MooerManager::ConnectCabinet()
 {
 	auto* pS = &m_mstate.activePreset.cab;
@@ -278,26 +271,6 @@ void MooerManager::ConnectCabinet()
 			[=](int v){ pS->center = v; send(); });
 	connect(m_ui.d_cab_distance, &QDial::valueChanged,
 			[=](int v){ pS->distance = v; send(); });
-}
-
-
-void MooerManager::OnCabinetLoad()
-{
-	int amp_idx = m_ui.cb_amp_type->currentIndex();
-	int slot_idx = amp_idx - 26;
-	if(slot_idx < 0)
-		return;
-
-	// std::string fnCab = "/home/thijs/gitrepo/mooer/traces/impulse V30 3 LPR.wav";
-	auto fileName =
-		QFileDialog::getOpenFileName(this, tr("Open Cabinet (Impulse Response)"), ptFileOpen, tr("WAVE Files (*.wav)"));
-	std::filesystem::path fnCab = fileName.toStdString();
-
-	std::string name = std::filesystem::path(fnCab).stem().string();
-	auto ampData = ReadFile(fnCab);
-	m_mooer.LoadWav(ampData, name, slot_idx);
-	m_mstate.ampModelNames.set(slot_idx, name);
-	emit MooerSettingsChanged(Mooer::RxFrame::CAB);
 }
 
 
@@ -368,6 +341,56 @@ void MooerManager::ConnectModulator()
 // clang-format on
 
 
+void MooerManager::OnAmpLoad()
+{
+	int amp_idx = m_ui.cb_amp_type->currentIndex();
+	int slot_idx = amp_idx - 55;
+	if(slot_idx < 0)
+		return;
+
+#if DEBUG_LVL > 2
+	// std::string fnAmp = "/home/thijs/gitrepo/mooer/traces/CALI DUAL 1.amp";
+	std::filesystem::path fnAmp = "/home/thijs/gitrepo/mooer/traces/E-MARSHALL PLEXI CRUNCH AV.GNR";
+#else
+	auto fileName = QFileDialog::getOpenFileName(
+		this, tr("Open Amplifier"), ptFileOpen, tr("Amplifier model (*.amp);;MNRS profile (*.gnr)"));
+	std::filesystem::path fnAmp = fileName.toStdString();
+#endif
+
+	std::string name = fnAmp.stem().string();
+	auto ampData = ReadFile(fnAmp);
+	if(iequals(fnAmp.extension().string(), ".amp"))
+		m_mooer.LoadAmplifier(ampData, name, slot_idx);
+	else if(iequals(fnAmp.extension().string(), ".gnr"))
+		m_mooer.LoadGNR(ampData, name, slot_idx);
+	else
+		throw std::runtime_error("Amplifier File format not supported");
+
+	m_mstate.ampModelNames.set(slot_idx, name);
+	emit MooerSettingsChanged(Mooer::RxFrame::AMP);
+}
+
+
+void MooerManager::OnCabinetLoad()
+{
+	int amp_idx = m_ui.cb_amp_type->currentIndex();
+	int slot_idx = amp_idx - 26;
+	if(slot_idx < 0)
+		return;
+
+	// std::string fnCab = "/home/thijs/gitrepo/mooer/traces/impulse V30 3 LPR.wav";
+	auto fileName =
+		QFileDialog::getOpenFileName(this, tr("Open Cabinet (Impulse Response)"), ptFileOpen, tr("WAVE Files (*.wav)"));
+	std::filesystem::path fnCab = fileName.toStdString();
+
+	std::string name = std::filesystem::path(fnCab).stem().string();
+	auto ampData = ReadFile(fnCab);
+	m_mooer.LoadWav(ampData, name, slot_idx);
+	m_mstate.ampModelNames.set(slot_idx, name);
+	emit MooerSettingsChanged(Mooer::RxFrame::CAB);
+}
+
+
 void MooerManager::OnUsbConnection()
 {
 	qInfo() << "MooerManager::OnUsbConnection()"; // << std::flush;
@@ -380,6 +403,12 @@ void MooerManager::SwitchMenuIfDifferent(int menu)
 		return;
 	m_mooer.SwitchMenu(menu);
 	m_mstate.activeMenu = menu;
+}
+
+
+std::string_view as_string_view(std::span<const std::uint8_t> s)
+{
+	return std::string_view((const char*)s.data(), s.size());
 }
 
 
@@ -396,6 +425,13 @@ void MooerManager::OnMooerFrame(const Mooer::RxFrame::Frame& frame)
 	case Mooer::RxFrame::Identify:
 		// Handled by OnMooerIdentify()
 		break;
+	case Mooer::RxFrame::PedalAssignment_Maybe:
+	{
+		std::string fw_version(as_string_view(data.subspan(1, 5)));		 // "2.0.4"
+		std::string model_name(as_string_view(data.subspan(1 + 5, 11))); // "MOOER_GE200"
+		qDebug() << QString("FWVersion %1, Model %2").arg(fw_version.c_str()).arg(model_name.c_str());
+	}
+	break;
 	case Mooer::RxFrame::CabinetUpload:
 		qDebug() << QString("MooerManager: Cabinet Acknowledge received for %1").arg(frame.index());
 	case Mooer::RxFrame::AmpUpload:
@@ -405,12 +441,21 @@ void MooerManager::OnMooerFrame(const Mooer::RxFrame::Frame& frame)
 		emit MooerPatchChange(frame.index());
 		m_mstate.activePresetIndex = frame.index();
 #ifdef MOOER_HAS_MIDI
-		m_midi.ProgramChange(0, m_mstate.activePresetIndex);
+		if(m_midi)
+			m_midi->ProgramChange(0, m_mstate.activePresetIndex);
 #endif
 		break;
 	case Mooer::RxFrame::AmpModels:
 		m_mstate.ampModelNames = Mooer::DeviceFormat::AmpModelNames(frame.data);
 		emit MooerSettingsChanged(Mooer::RxFrame::AMP);
+		break;
+	case Mooer::RxFrame::CabModels:
+#if DEBUG_LVL > 0
+		qDebug() << "Received CAB models";
+		m_mstate.cabModelNames = Mooer::DeviceFormat::AmpModelNames(frame.data);
+		// assert(!"Not Implemented");
+#endif
+		emit MooerSettingsChanged(Mooer::RxFrame::CAB);
 		break;
 	case Mooer::RxFrame::PatchSetting:
 	{
@@ -427,6 +472,13 @@ void MooerManager::OnMooerFrame(const Mooer::RxFrame::Frame& frame)
 		{
 			qDebug() << QString("Received invalid preset of size %1").arg(data_nochk.size());
 		}
+	}
+	break;
+	case Mooer::RxFrame::ActivePatchSetting:
+	{
+		auto idx = data_nochk[0];
+		qDebug() << QString("Received Preset data for %1").arg(idx);
+		// m_mstate.savedPresets.at(idx) = data_nochk.subspan(1);
 	}
 	break;
 	case Mooer::RxFrame::FX:
@@ -458,8 +510,12 @@ void MooerManager::OnMooerFrame(const Mooer::RxFrame::Frame& frame)
 		emit MooerSettingsChanged(frame.group());
 		break;
 	case Mooer::RxFrame::DELAY:
+		m_mstate.activePreset.delay = data_nochk;
+		emit MooerSettingsChanged(frame.group());
 		break;
 	case Mooer::RxFrame::REVERB:
+		m_mstate.activePreset.reverb = data_nochk;
+		emit MooerSettingsChanged(frame.group());
 		break;
 	case Mooer::RxFrame::RHYTHM:
 		m_mstate.activePreset.rhythm = data_nochk;

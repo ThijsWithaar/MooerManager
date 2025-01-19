@@ -4,8 +4,6 @@
 
 #include "QExceptionApplication.h"
 
-
-
 int main(int argc, char* argv[])
 {
 	QExceptionApplication app(argc, argv, "Mooer Manager");

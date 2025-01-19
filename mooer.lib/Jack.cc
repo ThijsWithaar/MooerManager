@@ -27,9 +27,14 @@ public:
 
 
 MooerMidiControl::MooerMidiControl(std::string_view name, MIDI::Callback* callback)
-	: m_callback(callback)
+	: MooerMidiControl(jack_client_open(name.data(), JackNullOption, NULL), callback)
 {
-	m_client = jack_client_open(name.data(), JackNullOption, NULL);
+}
+
+
+MooerMidiControl::MooerMidiControl(jack_client_t* client, MIDI::Callback* callback)
+	: MIDI::Interface(callback), m_client(client)
+{
 	if(m_client == nullptr)
 		throw std::runtime_error("Cannot open Jack server");
 
@@ -66,8 +71,12 @@ void MooerMidiControl::ProgramChange(std::uint8_t channel, std::uint8_t value)
 }
 
 
-void MooerMidiControl::Sysex(std::uint8_t channel, MIDI::Manufacturer manufacturer, std::span<std::uint8_t> values)
+void MooerMidiControl::Sysex(std::uint8_t channel, MIDI::Manufacturer manufacturer, std::span<std::uint8_t> data)
 {
+	std::vector<uint8_t> buf;
+	MIDI::CreateSysex(buf, channel, manufacturer, data);
+	jack_nframes_t time = 0;
+	jack_midi_event_write(m_port, time, buf.data(), buf.size());
 }
 
 
