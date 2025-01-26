@@ -199,12 +199,13 @@ void Parser::LoadWav(std::span<std::uint8_t> wav, std::string_view name, int slo
 }
 
 
-void Parser::LoadMoPreset(std::span<const std::uint8_t> mo)
+void Parser::LoadMoPreset(const File::MO& mo)
 {
+	// std::span<const std::uint8_t> mo)
 	const int szData = 0x200;
 
-	assert(mo.size() == 2048);
-	auto moData = mo.subspan(0x200, szData);
+	assert(sizeof(mo) == 2048);
+	std::span<const std::uint8_t> moData(reinterpret_cast<const std::uint8_t*>(&mo.preset), sizeof(mo.preset));
 
 	const int iData = 5;
 	std::vector<std::uint8_t> packetData(iData + szData + 2);

@@ -8,8 +8,8 @@
 #include <MooerParser.h>
 #include <UsbConnection.h>
 
-#ifdef __linux__
-#define MOOER_HAS_MIDI
+#if defined(__linux__) || defined(_WIN32)
+// #define MOOER_HAS_MIDI
 #endif
 
 
@@ -22,6 +22,8 @@ class MooerManager : public QMainWindow, USB::ConnectionListener, Mooer::Listene
 public:
 	MooerManager(QWidget* parent);
 
+	~MooerManager();
+
 signals:
 	void MooerIdentity(QString version, QString name);
 	void MooerPatchSetting(int idx); ///< Received the settings for this patch
@@ -32,7 +34,7 @@ private:
 	void SwitchMenuIfDifferent(int);
 
 	// USB::ConnectionListener
-	void OnUsbConnection() override;
+	void OnUsbConnected(bool) override;
 
 	// Mooer::Listener
 	void OnMooerFrame(const Mooer::RxFrame::Frame& frame) override;

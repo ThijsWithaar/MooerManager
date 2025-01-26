@@ -7,6 +7,7 @@
 #define NOMINMAX
 #include <windows.h>
 
+#include <Midi.h>
 
 // This is the API for teVirtualMIDI64.dll, installed by LoopMidi
 typedef struct _VM_MIDI_PORT VM_MIDI_PORT, *LPVM_MIDI_PORT;
@@ -16,10 +17,10 @@ namespace TeVirtualMidi
 {
 
 
-class MooerMidiControl
+class MooerMidiControl : public MIDI::Interface
 {
 public:
-	MooerMidiControl(std::wstring portName);
+	MooerMidiControl(std::wstring portName, MIDI::Callback* callback = nullptr);
 
 	~MooerMidiControl();
 

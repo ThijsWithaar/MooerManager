@@ -18,8 +18,9 @@ RUN echo -e "Europe/Amsterdam" > /etc/timezone && \
 
 # Install latest version of build-tools and development libraries
 RUN apt update -q && apt install -y --no-upgrade \
-        sudo build-essential git cmake ninja-build clang-18 lld-18 clang-tools-18 \
-        catch2 libflac-dev libopus-dev libsoxr-dev qt6-base-dev qt6-tools-dev libboost-all-dev \
+        sudo build-essential git cmake ninja-build clang-18 lld-18 clang-tools-18 catch2 \
+        libflac-dev libopus-dev libsoxr-dev qt6-base-dev qt6-tools-dev libboost-all-dev \
+        libfmt-dev libpipewire-0.3-dev libzip-dev \
         doxygen imagemagick && \
     apt-get clean
 

@@ -206,13 +206,23 @@ static_assert(sizeof(PresetPadded) == 0x200);
 /// https://github.com/sidekickDan/mooerMoConvert/blob/main/mooer.php
 struct MO
 {
-	u8 junk[0x200]; ///< Data seems unused
+	MO() = default;
+
+	MO(std::span<const std::uint8_t> src)
+	{
+		assert(0x800 == src.size());
+		std::span<std::uint8_t> ds{reinterpret_cast<std::uint8_t*>(this), 0x800};
+		std::copy(begin(src), end(src), begin(ds));
+	}
+
+	u8 junk[0x200] = {0}; ///< Data seems unused
 	PresetPadded preset;
+	u8 junk2[0x400] = {0}; ///< Seems unused as well
 };
 static_assert(offsetof(Preset, fx) == 540 - 0x200, "FX offset incorrect");
 static_assert(offsetof(Preset, ds) == 548 - 0x200, "DS offset incorrect");
 static_assert(offsetof(Preset, reverb) == 604 - 0x200, "DS reverb incorrect");
-static_assert(sizeof(MO) == 0x400);
+static_assert(sizeof(MO) == 0x800);
 
 
 struct MbfPreset
@@ -424,6 +434,27 @@ struct Rhythm
 	u16be unknown;
 };
 
+struct System
+{
+	auto& operator=(std::span<const std::uint8_t> s)
+	{
+		return copy(*this, s);
+	}
+
+	u8 inputLevel; ///< 0:-inf, 1:-60, 2:-45, 3:-35, 4:-30, 6:-20dB, 15:+6
+	u8 leftOut;	   ///< 0:dry, 1:effect
+	u8 rightOut;   ///< 0:dry, 1:effect
+	u8 recVolume;
+	u8 playVolume;
+	u8 leftCab;	 ///< 0:on, 1:thru
+	u8 rightCab; ///< 0:on, 1:thru
+	u8 unknown;
+	u8 trail;  ///< 0: on, 1:off
+	u8 looper; ///< 0: post, 1:pre
+};
+static_assert(sizeof(System) == 0x0b - sh);
+
+
 struct Pedal
 {
 	u8 module1, param1, module2, param2;
@@ -529,6 +560,7 @@ public:
 	enum Group
 	{
 		Identify = 0x10,
+		System = 0xA1,
 		PedalAssignment = 0xA3,
 		PatchAlternate = 0xA4, ///< Send when pressing CTRL TAP
 		PatchSetting = 0xA5,   ///< One patch entry of a group
@@ -542,6 +574,7 @@ public:
 		Menu = 0x82,	  ///< The currently active menu on the display
 		Preset = 0x83,
 		PedalAssignment_Maybe = 0x84, ///< FW version, model name?
+		FootSwitch = 0x89,
 		FX = 0x90,
 		DS_OD = 0x91,
 		AMP = 0x93,
@@ -689,7 +722,7 @@ public:
 		// std::array<std::uint8_t, 12> msg2{11, 0xAA, 0x55, 0x05, 0x00, 0x82, 0x00, 0x00, 0x00, 0x00, 0xE0, 0x0B};
 	}
 
-	/// Download preset from device.
+	/// Store current settings to preset \p idx
 	/// \p idx: zero-based patch
 	/// \p name: max. 15 characters
 	void StorePreset(int idx, std::string_view name)
@@ -700,7 +733,7 @@ public:
 	}
 
 	/** Switch the menu that's shown on the display
-	FX=1, OD=2, Amp=3, Cab=4
+	FX=1, OD=2, Amp=3, Cab=4, System=0x0B
 	*/
 	void SwitchMenu(std::uint8_t menu)
 	{
@@ -744,7 +777,7 @@ public:
 	/**
 	Load an .mo file into the active preset
 	*/
-	void LoadMoPreset(std::span<const std::uint8_t> mo);
+	void LoadMoPreset(const File::MO& mo);
 
 	void SetFX(const DeviceFormat::FX& fx)
 	{
@@ -793,17 +826,21 @@ public:
 		std::array<std::uint8_t, sizeof(DeviceFormat::Mod) + 1> msg{RxFrame::Group::MOD, 0};
 		std::uint16_t type = s.type;
 		if(type >= 22)
-		{
+		{ // The GE-200 crashes if s.type is invalid
 			std::stringstream ss;
 			ss << "Modulator type " << type << " must be < 21";
 			throw std::runtime_error(ss.str());
 		}
 		copy(std::span(msg).subspan(1), s);
-		// This makes the GE-200 crash
 		SendWithHeaderAndChecksum(msg);
 	}
 
-
+	void SetSystem(const DeviceFormat::System& s)
+	{
+		std::array<std::uint8_t, sizeof(DeviceFormat::System) + 1> msg{RxFrame::Group::System, 0};
+		copy(std::span(msg).subspan(1), s);
+		SendWithHeaderAndChecksum(msg);
+	}
 
 private:
 	void SendWithHeaderAndChecksum(std::span<const std::uint8_t> m);

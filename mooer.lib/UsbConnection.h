@@ -18,7 +18,7 @@ class ConnectionListener
 public:
 	virtual ~ConnectionListener() = default;
 
-	virtual void OnUsbConnection() = 0;
+	virtual void OnUsbConnected(bool) = 0;
 };
 
 class TransferListener
@@ -54,11 +54,15 @@ public:
 		auto operator<=>(const DeviceId&) const = default;
 	};
 
-	Connection(DeviceId did);
+	Connection(DeviceId did, ConnectionListener* connectionListener = nullptr);
 
 	~Connection();
 
+	bool IsConnected() const;
+
 	void StartEventLoop();
+
+	void StopEventLoop();
 
 	std::span<std::uint8_t> interrupt_transfer(unsigned char endpoint, std::span<std::uint8_t> data);
 
@@ -82,6 +86,7 @@ private:
 	libusb_context* m_ctx;
 	libusb_hotplug_callback_handle m_hotplug_handle;
 	libusb_device_handle* m_device;
+	ConnectionListener* m_listener;
 };
 
 } // namespace USB

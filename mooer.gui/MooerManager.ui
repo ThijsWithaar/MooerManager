@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>994</width>
+    <width>1031</width>
     <height>619</height>
    </rect>
   </property>
@@ -214,21 +214,7 @@
          <string>Patches</string>
         </property>
         <layout class="QGridLayout" name="gridLayout_5">
-         <item row="0" column="4">
-          <widget class="QPushButton" name="pbPatchList">
-           <property name="text">
-            <string>Download Settings</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="0">
-          <widget class="QPushButton" name="pbIdentify">
-           <property name="text">
-            <string>Identify</string>
-           </property>
-          </widget>
-         </item>
-         <item row="4" column="0">
+         <item row="6" column="0">
           <spacer name="vs_patch">
            <property name="orientation">
             <enum>Qt::Orientation::Vertical</enum>
@@ -241,38 +227,87 @@
            </property>
           </spacer>
          </item>
+         <item row="0" column="4">
+          <widget class="QPushButton" name="pbPatchList">
+           <property name="toolTip">
+            <string>Download Presets and Settings from device</string>
+           </property>
+           <property name="text">
+            <string>Download Settings</string>
+           </property>
+           <property name="icon">
+            <iconset theme="QIcon::ThemeIcon::GoDown"/>
+           </property>
+          </widget>
+         </item>
          <item row="3" column="4">
-          <widget class="QComboBox" name="cbPatch"/>
+          <widget class="QPushButton" name="pbStorePreset">
+           <property name="toolTip">
+            <string>Store preset to device</string>
+           </property>
+           <property name="text">
+            <string>Store</string>
+           </property>
+           <property name="icon">
+            <iconset theme="QIcon::ThemeIcon::GoUp"/>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="lPatch">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string>Patch</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="4">
+          <widget class="QComboBox" name="cbPatch">
+           <property name="editable">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0">
+          <widget class="QPushButton" name="pbIdentify">
+           <property name="toolTip">
+            <string>Send Identify request</string>
+           </property>
+           <property name="text">
+            <string>Identify</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="0">
+          <widget class="QPushButton" name="pbExportPreset">
+           <property name="toolTip">
+            <string>Save Preset to disk</string>
+           </property>
+           <property name="text">
+            <string>Export</string>
+           </property>
+           <property name="icon">
+            <iconset theme="QIcon::ThemeIcon::DocumentSave"/>
+           </property>
+          </widget>
          </item>
          <item row="3" column="0">
-          <layout class="QHBoxLayout" name="horizontalLayout">
-           <property name="leftMargin">
-            <number>0</number>
+          <widget class="QPushButton" name="pbImportPreset">
+           <property name="toolTip">
+            <string>Load preset from disk</string>
            </property>
-           <item>
-            <widget class="QLabel" name="lPatch">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="text">
-              <string>Patch</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="pbLoadPreset">
-             <property name="text">
-              <string/>
-             </property>
-             <property name="icon">
-              <iconset theme="QIcon::ThemeIcon::DocumentOpen"/>
-             </property>
-            </widget>
-           </item>
-          </layout>
+           <property name="text">
+            <string>Import</string>
+           </property>
+           <property name="icon">
+            <iconset theme="QIcon::ThemeIcon::DocumentOpen"/>
+           </property>
+          </widget>
          </item>
         </layout>
        </widget>
@@ -647,6 +682,9 @@
          </item>
          <item row="0" column="1">
           <widget class="QPushButton" name="pb_amp_load">
+           <property name="toolTip">
+            <string>Load MNRS profile from disk</string>
+           </property>
            <property name="text">
             <string>Load from disk</string>
            </property>
@@ -1177,7 +1215,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>994</width>
+     <width>1031</width>
      <height>30</height>
     </rect>
    </property>

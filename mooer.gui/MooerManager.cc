@@ -92,15 +92,39 @@ MooerManager::MooerManager(QWidget* parent)
 				SwitchMenuIfDifferent(0);
 				m_mooer.SendPresetChange(index);
 			});
-	connect(m_ui.pbLoadPreset,
+	connect(m_ui.pbImportPreset,
 			&QPushButton::clicked,
 			[&](bool)
 			{
 				auto fileName =
-					QFileDialog::getOpenFileName(this, tr("Open Preset"), ptFileOpen, tr("Preset Files (*.mo)"));
+					QFileDialog::getOpenFileName(this, tr("Import Preset"), ptFileOpen, tr("Preset Files (*.mo)"));
 				std::filesystem::path fnPreset = fileName.toStdString();
 				auto data = ReadFile(fnPreset);
-				m_mooer.LoadMoPreset(data);
+				Mooer::File::MO mo(data);
+				m_mooer.LoadMoPreset(mo);
+			});
+	connect(m_ui.pbExportPreset,
+			&QPushButton::clicked,
+			[this](bool)
+			{
+				auto fileName =
+					QFileDialog::getSaveFileName(this, tr("Export Preset"), ptFileOpen, tr("Preset Files (*.mo)"));
+				auto fnPreset = fileName.toStdString();
+
+				Mooer::File::MO mo;
+				mo.preset = m_mstate.savedPresets.at(m_mstate.activePresetIndex);
+				//*static_cast<Mooer::File::Preset*>(&mo.preset) = Mooer::File::Preset(m_mstate.activePreset);
+				{
+					std::ofstream f(fnPreset, std::ios::binary);
+					f.write(reinterpret_cast<const char*>(&mo), sizeof(mo));
+				};
+			});
+	connect(m_ui.pbStorePreset,
+			&QPushButton::clicked,
+			[&](bool)
+			{
+				auto name = m_ui.cbPatch->currentText().toStdString();
+				m_mooer.StorePreset(m_ui.cbPatch->currentIndex(), name);
 			});
 
 	ConnectFX();
@@ -138,7 +162,7 @@ MooerManager::MooerManager(QWidget* parent)
 			if(patchIndex < maxPatchIdx)
 			{
 				int pct = (patchIndex * 100) / 199;
-				auto msg = QString("Downloading settings: %1%%").arg(pct);
+				auto msg = QString("Downloading settings: %1%").arg(pct);
 				m_ui.statusbar->showMessage(msg);
 			}
 			else
@@ -161,12 +185,16 @@ MooerManager::MooerManager(QWidget* parent)
 
 	connect(this, &MooerManager::MooerSettingsChanged, this, &MooerManager::UpdateSettingsView);
 
+	// Start USB
 	m_usb.StartEventLoop();
-
-	// This is the sequence MooerStudio sends out
-	m_mooer.SendIdentifyRequest();
-	m_mooer.SendIdentifyRequest();
+	OnUsbConnected(m_usb.IsConnected());
 	qDebug() << "MooerManager: constructor finished";
+}
+
+
+MooerManager::~MooerManager()
+{
+	m_usb.StopEventLoop();
 }
 
 
@@ -378,7 +406,7 @@ void MooerManager::OnCabinetLoad()
 	if(slot_idx < 0)
 		return;
 
-	// std::string fnCab = "/home/thijs/gitrepo/mooer/traces/impulse V30 3 LPR.wav";
+	// std::filesystem::path fnCab = ptFileOpen / "impulse V30 3 LPR.wav";
 	auto fileName =
 		QFileDialog::getOpenFileName(this, tr("Open Cabinet (Impulse Response)"), ptFileOpen, tr("WAVE Files (*.wav)"));
 	std::filesystem::path fnCab = fileName.toStdString();
@@ -391,9 +419,20 @@ void MooerManager::OnCabinetLoad()
 }
 
 
-void MooerManager::OnUsbConnection()
+void MooerManager::OnUsbConnected(bool connected)
 {
-	qInfo() << "MooerManager::OnUsbConnection()"; // << std::flush;
+	qInfo() << QString("MooerManager::OnUsbConnection(%1)").arg(connected);
+	if(connected)
+	{
+		// This is the sequence MooerStudio sends out
+		m_mooer.SendIdentifyRequest();
+		m_mooer.SendIdentifyRequest();
+	}
+	else
+	{
+		m_need_patches = true;
+		m_ui.centralwidget->setEnabled(false);
+	}
 }
 
 
@@ -427,8 +466,8 @@ void MooerManager::OnMooerFrame(const Mooer::RxFrame::Frame& frame)
 		break;
 	case Mooer::RxFrame::PedalAssignment_Maybe:
 	{
-		std::string fw_version(as_string_view(data.subspan(1, 5)));		 // "2.0.4"
-		std::string model_name(as_string_view(data.subspan(1 + 5, 11))); // "MOOER_GE200"
+		std::string fw_version(as_string_view(data_nochk.subspan(0, 5)));		 // "2.0.4"
+		std::string model_name(as_string_view(data_nochk.subspan(0 + 5, 11))); // "MOOER_GE200"
 		qDebug() << QString("FWVersion %1, Model %2").arg(fw_version.c_str()).arg(model_name.c_str());
 	}
 	break;
@@ -481,6 +520,9 @@ void MooerManager::OnMooerFrame(const Mooer::RxFrame::Frame& frame)
 		// m_mstate.savedPresets.at(idx) = data_nochk.subspan(1);
 	}
 	break;
+	case Mooer::RxFrame::FootSwitch:
+		qDebug() << QString("FootSwitch Mode %1").arg(data[1]);
+		break;
 	case Mooer::RxFrame::FX:
 		m_mstate.activePreset.fx = data_nochk;
 		emit MooerSettingsChanged(frame.group());

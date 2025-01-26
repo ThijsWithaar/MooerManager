@@ -74,7 +74,7 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ${{ github.workspace }}/vcpkg.cache
-        key: ${{ runner.os }}-${{ hashFiles('**/vcpkg.json') }}-${{ hashFiles('**/cmake/triplets/arm64-osx.cmake') }}
+        key: ${{ runner.os }}-${{ hashFiles('**/vcpkg.json') }}-${{ hashFiles('**/cmake/triplets/arm64-osx.cmake') }}-v2
 
     - name: Build
       run: |

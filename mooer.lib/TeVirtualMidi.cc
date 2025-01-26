@@ -81,7 +81,8 @@ namespace TeVirtualMidi
 {
 
 
-MooerMidiControl::MooerMidiControl(std::wstring portName)
+MooerMidiControl::MooerMidiControl(std::wstring portName, MIDI::Callback* callback)
+	: MIDI::Interface(callback)
 {
 	DWORD flags = TE_VM_FLAGS_PARSE_RX;
 	m_port = virtualMIDICreatePortEx3(

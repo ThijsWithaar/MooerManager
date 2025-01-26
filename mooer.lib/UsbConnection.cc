@@ -10,6 +10,9 @@
 #include <format>
 #endif
 
+#include <fmt/format.h>
+
+
 namespace USB
 {
 
@@ -123,22 +126,26 @@ int Connection::hotplug_cb(libusb_context* ctx, libusb_device* device, libusb_ho
 	if(self->m_device == nullptr && LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED == event)
 	{
 		std::cout << " Connection::hotplug_cb: connect\n";
-		// int rc = libusb_open(device, &self->m_device);
-		// self->m_listener->OnUsbConnection();
+		int rc = libusb_open(device, &self->m_device);
+		if((rc == 0) && (self->m_listener != nullptr))
+			self->m_listener->OnUsbConnected(true);
 	}
 	else if(LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT == event && (current_dev == device))
 	{
 		std::cout << " UsbConnection::hotplug_cb: DISconnect\n";
-		// libusb_close(self->m_device);
-		// self->m_device = nullptr;
+		libusb_close(self->m_device);
+		self->m_device = nullptr;
+
+		if(self->m_listener != nullptr)
+			self->m_listener->OnUsbConnected(false);
 	}
 
 	return 1; // Finished with this event
 }
 
 
-Connection::Connection(DeviceId did)
-	: m_device(nullptr)
+Connection::Connection(DeviceId did, ConnectionListener* listener)
+	: m_device(nullptr), m_listener(listener)
 {
 	const int interface = 3;
 
@@ -176,7 +183,7 @@ Connection::Connection(DeviceId did)
 			std::cout << std::format(" device, with {} itfs\n", conf->bNumInterfaces);
 #endif
 
-		libusb_device_handle* handle;
+		libusb_device_handle* handle = nullptr;
 		if(int rc = libusb_open(dev, &handle))
 		{
 #if DEBUG_LVL_USB > 0
@@ -205,20 +212,16 @@ Connection::Connection(DeviceId did)
 	m_device = libusb_open_device_with_vid_pid(m_ctx, did.vendor, did.product);
 	if(m_device == nullptr)
 	{
-		char err[80];
-		printf("UsbConnection: could not open %04x:%04x", did.vendor, did.product);
-		throw std::runtime_error(err);
-		// throw std::runtime_error(std::format("UsbConnection: could not open {:04x}:{:04x}", did.vendor,
-		// did.product));
+		auto err = fmt::format("UsbConnection: could not open {:04x}:{:04x}", did.vendor, did.product);
+		// throw std::runtime_error(err);
 	}
 
-#if 0
-	int events = LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED;
+#if 1
+	int events = LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED | LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT;
 	int flags = 0;
 	int dev_class = LIBUSB_HOTPLUG_MATCH_ANY;
-	m_hotplug_handle = 0;
 	m_hotplug_handle = libusb_hotplug_register_callback(
-		m_ctx, events, flags, did.vendor, did.product, dev_class, &UsbConnection::hotplug_cb, this, &m_hotplug_handle);
+		m_ctx, events, flags, did.vendor, did.product, dev_class, &Connection::hotplug_cb, this, &m_hotplug_handle);
 #endif
 }
 
@@ -227,9 +230,9 @@ Connection::~Connection()
 {
 	std::cout << "USB::Connection::~Connection" << std::endl;
 
-	m_event_worker.request_stop();
+	libusb_hotplug_deregister_callback(m_ctx, m_hotplug_handle);
 
-	// libusb_hotplug_deregister_callback(m_ctx, m_hotplug_handle);
+	m_event_worker.request_stop();
 
 	// libusb_free_transfer(m_interrupt_read_transfer);
 
@@ -237,9 +240,15 @@ Connection::~Connection()
 
 	libusb_close(m_device);
 
-
 	libusb_exit(m_ctx);
 }
+
+
+bool Connection::IsConnected() const
+{
+	return m_device != nullptr;
+}
+
 
 void Connection::StartEventLoop()
 {
@@ -247,11 +256,17 @@ void Connection::StartEventLoop()
 }
 
 
+void Connection::StopEventLoop()
+{
+	m_event_worker.request_stop();
+	std::cout << "Connection::StopEventLoop: joining thread" << std::endl;
+}
+
+
 void Connection::RunEventLoop()
 {
 	auto st = m_event_worker.get_stop_token();
-	int completed = 0;
-	while((!st.stop_requested()) && (libusb_event_handling_ok(m_ctx)) && (!completed))
+	while((!st.stop_requested()) && (libusb_event_handling_ok(m_ctx)))
 	{
 		struct timeval tv{1, 0};
 		/*if(libusb_try_lock_events(m_ctx) == 0)
@@ -262,7 +277,7 @@ void Connection::RunEventLoop()
 		// if(!libusb_event_handling_ok(m_ctx))
 		//	libusb_unlock_events(m_ctx);
 
-		CheckedLibUsb rc = libusb_handle_events_timeout_completed(m_ctx, &tv, &completed);
+		CheckedLibUsb rc = libusb_handle_events_timeout_completed(m_ctx, &tv, nullptr);
 	}
 	std::cout << "USB::Connection::RunEventLoop(): done\n";
 }
@@ -282,6 +297,9 @@ void Connection::Connect(TransferListener* listener, unsigned char endpoint)
 
 std::span<std::uint8_t> Connection::interrupt_transfer(unsigned char endpoint, std::span<std::uint8_t> data)
 {
+	if(!IsConnected())
+		return {};
+
 	const int timeout_ms = 3 * 1000;
 	int dsize = 0;
 	assert(m_device != nullptr);
@@ -297,6 +315,9 @@ std::span<std::uint8_t> Connection::interrupt_transfer(unsigned char endpoint, s
 void Connection::control_transfer(
 	uint8_t request_type, uint8_t request, int16_t wValue, uint16_t wIndex, std::span<const std::uint8_t> data)
 {
+	if(!IsConnected())
+		return;
+
 	int timeout_ms = 0;
 	auto pData = const_cast<std::uint8_t*>(data.data());
 	int rx = libusb_control_transfer(m_device, request_type, request, wValue, wIndex, pData, data.size(), timeout_ms);
@@ -309,6 +330,9 @@ void Connection::control_transfer(
 
 void Connection::bulk_transfer(unsigned char endpoint, std::span<const std::uint8_t> data)
 {
+	if(!IsConnected())
+		return;
+
 	int timeout_ms = 0;
 	int actual_length = 0;
 	auto pData = const_cast<std::uint8_t*>(data.data());

@@ -5,9 +5,8 @@
 #include <cstdint>
 #include <memory>
 #include <span>
-#include <vector>
 #include <string_view>
-
+#include <vector>
 
 /**
 Definition of the MIDI protocol

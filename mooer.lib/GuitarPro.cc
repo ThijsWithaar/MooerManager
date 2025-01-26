@@ -123,7 +123,7 @@ int GPIF::nrTracks()
 
 int GPIF::nrBars()
 {
-	return masterBars.front().bars.size();
+	return masterBars.size();
 }
 
 
@@ -247,6 +247,33 @@ std::vector<GPIF::Track> ReaderV78::ParseTracks(node_t tracks)
 	std::vector<GPIF::Track> r;
 	for(auto& track : tracks.children())
 	{
+		/* [Sounds/Sound/RSE/EffectChain] has:
+			<Effect id="E03_OverdriveScreamer">
+			<Parameters>0.84 0.5 0.84</Parameters>
+			</Effect>
+			<Effect id="E26_CompressorOrange">
+			<Parameters>0.6 0.5</Parameters>
+			</Effect>
+			<Effect id="E07_DistortionGrunge">
+			<Parameters>0.8 0.2 0.8 0.6</Parameters>
+			</Effect>
+			<Effect id="A05_StackBritishVintage">
+			<Parameters>0.85 0.67 0.36 0.66 0.52</Parameters>
+			</Effect>
+			<Effect id="E30_EqGEq">
+			<Parameters>0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.342857</Parameters>
+		*/
+		for(auto sound : track.child("Sounds").children())
+		{
+			if(auto rse = sound.child("RSE"))
+			{
+				for(auto fx : rse.child("EffectChain").child("Effect"))
+				{
+					// get id, parameters
+				}
+			}
+		}
+
 		r.push_back(GPIF::Track{
 			as_string(track.child("Name")),
 			track.child("PalmMute").text().as_bool(),

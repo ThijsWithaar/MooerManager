@@ -1,5 +1,5 @@
 
-debian_add_package(libfmt-dev libzip-dev zipcmp zipmerge ziptool libpugixml-dev)
+debian_add_package(libfmt-dev libpipewire-0.3-dev libzip-dev zipcmp zipmerge ziptool libpugixml-dev)
 
 if(DEFINED CMAKE_TOOLCHAIN_FILE)
 	find_package(PkgConfig REQUIRED)
