@@ -34,7 +34,7 @@ struct CheckedLibUsb
 		if(rc == 0)
 			return;
 		std::stringstream ss;
-		ss << "libusb error " << libusb_strerror(rc);
+		ss << "libusb error: '" << libusb_strerror(rc) << "'";
 		throw std::runtime_error(ss.str());
 	}
 };
@@ -79,10 +79,12 @@ TransferListener::~TransferListener()
 {
 	m_continue = false;
 	std::cout << "TransferListener::~TransferListener" << std::endl;
-	CheckedLibUsb rcw = libusb_cancel_transfer(m_bulk_write_transfer);
+	// CheckedLibUsb rcw =
+	libusb_cancel_transfer(m_bulk_write_transfer);
 	libusb_free_transfer(m_bulk_write_transfer);
 
-	CheckedLibUsb rcr = libusb_cancel_transfer(m_read_transfer);
+	// CheckedLibUsb rcr =
+	libusb_cancel_transfer(m_read_transfer);
 	libusb_free_transfer(m_read_transfer);
 	m_read_transfer = nullptr;
 }
@@ -90,6 +92,8 @@ TransferListener::~TransferListener()
 
 void TransferListener::Connect(libusb_device_handle* device, unsigned char endpoint)
 {
+	if(device == nullptr)
+		return;
 	const unsigned int timeout = 0;
 	libusb_fill_interrupt_transfer(m_read_transfer,
 								   device,

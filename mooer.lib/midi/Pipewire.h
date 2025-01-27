@@ -7,7 +7,7 @@
 #include <pipewire/thread-loop.h>
 #include <spa/pod/builder.h>
 
-#include <Midi.h>
+#include <midi/Midi.h>
 
 
 namespace PipeWire

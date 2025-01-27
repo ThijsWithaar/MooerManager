@@ -74,7 +74,7 @@ BOOL CALLBACK virtualMIDISendData(LPVM_MIDI_PORT midiPort, LPBYTE midiDataBytes,
 }
 
 
-#include <TeVirtualMidi.h>
+#include <midi/TeVirtualMidi.h>
 
 
 namespace TeVirtualMidi
@@ -93,6 +93,21 @@ MooerMidiControl::MooerMidiControl(std::wstring portName, MIDI::Callback* callba
 MooerMidiControl::~MooerMidiControl()
 {
 	virtualMIDIClosePort(m_port);
+}
+
+
+void MooerMidiControl::ControlChange(std::uint8_t channel, MIDI::ControlChange controller, std::uint8_t value)
+{
+}
+
+
+void MooerMidiControl::ProgramChange(std::uint8_t channel, std::uint8_t value)
+{
+}
+
+
+void MooerMidiControl::Sysex(std::uint8_t channel, MIDI::Manufacturer manufacturer, std::span<std::uint8_t> values)
+{
 }
 
 

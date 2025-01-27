@@ -414,7 +414,7 @@ struct Reverb
 	}
 
 	u16be enabled, type;
-	std::array<u16be, 4> p;
+	u16be preDelay, level, decay, tone;
 };
 static_assert(sizeof(Reverb) == 0x0d - sh);
 
@@ -457,6 +457,11 @@ static_assert(sizeof(System) == 0x0b - sh);
 
 struct Pedal
 {
+	auto& operator=(std::span<const std::uint8_t> s)
+	{
+		return copy(*this, s);
+	}
+
 	u8 module1, param1, module2, param2;
 	u8 unk = 5;
 	u8 vol_min, vol_max;
@@ -475,6 +480,11 @@ struct AmpModelNames
 	{
 		assert(d.size() >= m_data.size());
 		std::copy(std::begin(d), std::begin(d) + m_data.size(), std::begin(m_data));
+	}
+
+	bool empty() const
+	{
+		return m_data[0] == '\0';
 	}
 
 	constexpr static int size()
@@ -518,6 +528,14 @@ struct Preset
 		return *this;
 	}
 
+	operator File::Preset() const
+	{
+		File::Preset p{.fxOrder = fxOrder, .size = size, .name = {}};
+		strncpy(p.name, name, std::min(sizeof(p.name), sizeof(name)));
+		assert(!"Not Implemented");
+		return p;
+	}
+
 	std::array<std::uint8_t, 10> fxOrder; ///< Ordering of the effects, excluding rhythm
 	u16be size;
 	char name[14];
@@ -531,6 +549,7 @@ struct Preset
 	Delay delay;
 	Reverb reverb;
 	Rhythm rhythm;
+	// ToDo: Is the pedal here maybe?
 	u8 unknown[0x15e];
 };
 static_assert(sizeof(Preset) == 0x200);
@@ -541,12 +560,15 @@ struct State
 	int activePresetIndex;
 	int activeMenu;
 	AmpModelNames ampModelNames, cabModelNames;
+	Pedal pedal;
+	std::uint8_t volume;
+	bool footswitchConfirm; ///< Footswitch confirmation?
+	System system;
 	Preset activePreset;
 	std::array<Mooer::File::PresetPadded, 200> savedPresets;
 };
 
 } // namespace DeviceFormat
-
 
 
 class RxFrame
@@ -561,6 +583,7 @@ public:
 	{
 		Identify = 0x10,
 		System = 0xA1,
+		Volume = 0xA2, ///< The global patch volume
 		PedalAssignment = 0xA3,
 		PatchAlternate = 0xA4, ///< Send when pressing CTRL TAP
 		PatchSetting = 0xA5,   ///< One patch entry of a group
@@ -574,7 +597,7 @@ public:
 		Menu = 0x82,	  ///< The currently active menu on the display
 		Preset = 0x83,
 		PedalAssignment_Maybe = 0x84, ///< FW version, model name?
-		FootSwitch = 0x89,
+		FootSwitch = 0x89,			  ///< System/Footswitch mode: 0:Normal, 1:Confirm
 		FX = 0x90,
 		DS_OD = 0x91,
 		AMP = 0x93,
@@ -681,17 +704,29 @@ Commands for the request, send on host->1.5.1, received on 1.5.1->host.
 class Parser : public USB::TransferListener
 {
 public:
+	/**
+	Setup the Parser, need to Connect() afterwards.
+	 */
 	Parser(USB::Connection* connection = nullptr, Listener* listener = nullptr)
 		: m_connection(connection), m_listener(listener)
 	{
-		m_connection->Connect(this, m_rx_endpoint);
 	}
 
 	~Parser()
 	{
+#if PARSER_DEBUG_LVL > 3
 		std::cout << "Mooer::Parser::~Parser" << std::endl;
+#endif
 	}
 
+	/// Connect to USB, this sets up a transfer,
+	/// so cannot be called from the USB::Onconnected callback
+	void Connect()
+	{
+		m_connection->Connect(this, m_rx_endpoint);
+	}
+
+	Parser& operator=(Parser&& o) = delete;
 	/// Send an identification request. Should respond with "MOOER_GE200"
 	void SendIdentifyRequest()
 	{
@@ -842,9 +877,10 @@ public:
 		SendWithHeaderAndChecksum(msg);
 	}
 
-private:
+	/// Send a raw (<58 bytes) message, add a checksum
 	void SendWithHeaderAndChecksum(std::span<const std::uint8_t> m);
 
+private:
 	/// Split a packet into max 63-bytes chunks and send it
 	void SendSplitPacket(std::span<const std::uint8_t> m);
 

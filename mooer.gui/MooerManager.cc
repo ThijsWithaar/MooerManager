@@ -60,7 +60,7 @@ std::vector<std::uint8_t> ReadFile(std::filesystem::path fn)
 
 
 MooerManager::MooerManager(QWidget* parent)
-	: m_usb({Mooer::vendor_id, Mooer::product_id})
+	: m_usb({Mooer::vendor_id, Mooer::product_id}, this)
 	, m_mooer(&m_usb, this)
 	, m_need_patches(true)
 #ifdef MOOER_HAS_MIDI
@@ -134,6 +134,19 @@ MooerManager::MooerManager(QWidget* parent)
 	ConnectNoiseGate();
 	ConnectEqualizer();
 	ConnectModulator();
+
+	connect(
+		this,
+		&MooerManager::MooerConnected,
+		this,
+		[this]()
+		{
+			m_mooer.Connect();
+			// This is the sequence MooerStudio sends out
+			m_mooer.SendIdentifyRequest();
+			m_mooer.SendIdentifyRequest();
+		},
+		Qt::QueuedConnection);
 
 	connect(
 		this,
@@ -287,8 +300,9 @@ void MooerManager::ConnectCabinet()
 	connect(m_ui.cb_cab_enabled, &QCheckBox::clicked,
 			[=](bool e){ pS->enabled = e; send(); });
 	connect(m_ui.cb_cab_type, &QComboBox::currentIndexChanged,
-			[this](int i){
+			[=, this](int i){
 				m_ui.pb_cab_load->setEnabled(i >= 26);
+				pS->type = i+1; send();
 			});
 	connect(m_ui.pb_cab_load, &QPushButton::clicked, [&]() { OnCabinetLoad(); });
 	connect(m_ui.cb_cab_tube, &QComboBox::currentIndexChanged,
@@ -377,8 +391,8 @@ void MooerManager::OnAmpLoad()
 		return;
 
 #if DEBUG_LVL > 2
-	// std::string fnAmp = "/home/thijs/gitrepo/mooer/traces/CALI DUAL 1.amp";
-	std::filesystem::path fnAmp = "/home/thijs/gitrepo/mooer/traces/E-MARSHALL PLEXI CRUNCH AV.GNR";
+	// auto fnAmp = std::filesystem::path(ptFileOpen.toStdString()) / "CALI DUAL 1.amp";
+	auto fnAmp = std::filesystem::path(ptFileOpen.toStdString()) / "E-MARSHALL PLEXI CRUNCH AV.GNR";
 #else
 	auto fileName = QFileDialog::getOpenFileName(
 		this, tr("Open Amplifier"), ptFileOpen, tr("Amplifier model (*.amp);;MNRS profile (*.gnr)"));
@@ -424,9 +438,9 @@ void MooerManager::OnUsbConnected(bool connected)
 	qInfo() << QString("MooerManager::OnUsbConnection(%1)").arg(connected);
 	if(connected)
 	{
-		// This is the sequence MooerStudio sends out
-		m_mooer.SendIdentifyRequest();
-		m_mooer.SendIdentifyRequest();
+		// This callback is called from the USB thread, so no UI or USB calls are allowed here.
+		// emit a signal, which a Qt::QueuedConnection will than pass onto the main UI thread.
+		emit MooerConnected();
 	}
 	else
 	{
@@ -466,15 +480,20 @@ void MooerManager::OnMooerFrame(const Mooer::RxFrame::Frame& frame)
 		break;
 	case Mooer::RxFrame::PedalAssignment_Maybe:
 	{
-		std::string fw_version(as_string_view(data_nochk.subspan(0, 5)));		 // "2.0.4"
+		std::string fw_version(as_string_view(data_nochk.subspan(0, 5)));	   // "2.0.4"
 		std::string model_name(as_string_view(data_nochk.subspan(0 + 5, 11))); // "MOOER_GE200"
 		qDebug() << QString("FWVersion %1, Model %2").arg(fw_version.c_str()).arg(model_name.c_str());
 	}
 	break;
 	case Mooer::RxFrame::CabinetUpload:
+#if DEBUG_LVL > 0
 		qDebug() << QString("MooerManager: Cabinet Acknowledge received for %1").arg(frame.index());
+#endif
+		break;
 	case Mooer::RxFrame::AmpUpload:
+#if DEBUG_LVL > 0
 		qDebug() << QString("MooerManager: Amp Acknowledge received for %1").arg(frame.index());
+#endif
 		break;
 	case Mooer::RxFrame::ActivePatch:
 		emit MooerPatchChange(frame.index());
@@ -489,11 +508,10 @@ void MooerManager::OnMooerFrame(const Mooer::RxFrame::Frame& frame)
 		emit MooerSettingsChanged(Mooer::RxFrame::AMP);
 		break;
 	case Mooer::RxFrame::CabModels:
-#if DEBUG_LVL > 0
+#if DEBUG_LVL > 3
 		qDebug() << "Received CAB models";
-		m_mstate.cabModelNames = Mooer::DeviceFormat::AmpModelNames(frame.data);
-		// assert(!"Not Implemented");
 #endif
+		m_mstate.cabModelNames = Mooer::DeviceFormat::AmpModelNames(frame.data);
 		emit MooerSettingsChanged(Mooer::RxFrame::CAB);
 		break;
 	case Mooer::RxFrame::PatchSetting:
@@ -521,7 +539,8 @@ void MooerManager::OnMooerFrame(const Mooer::RxFrame::Frame& frame)
 	}
 	break;
 	case Mooer::RxFrame::FootSwitch:
-		qDebug() << QString("FootSwitch Mode %1").arg(data[1]);
+		qDebug() << QString("FootSwitch Mode %1").arg(data_nochk[0]);
+		m_mstate.footswitchConfirm = data_nochk[0];
 		break;
 	case Mooer::RxFrame::FX:
 		m_mstate.activePreset.fx = data_nochk;
@@ -557,22 +576,41 @@ void MooerManager::OnMooerFrame(const Mooer::RxFrame::Frame& frame)
 		break;
 	case Mooer::RxFrame::REVERB:
 		m_mstate.activePreset.reverb = data_nochk;
+#ifdef MOOER_HAS_MIDI
+		if(m_midi)
+			m_midi->ControlChange(0, MIDI::ControlChange::Reverb, m_mstate.activePreset.reverb.level);
+#endif
 		emit MooerSettingsChanged(frame.group());
 		break;
 	case Mooer::RxFrame::RHYTHM:
 		m_mstate.activePreset.rhythm = data_nochk;
 		emit MooerSettingsChanged(frame.group());
 		break;
+	case Mooer::RxFrame::PedalAssignment:
+		m_mstate.pedal = data_nochk;
+		emit MooerSettingsChanged(frame.group());
+		break;
+	case Mooer::RxFrame::System:
+		m_mstate.system = data_nochk;
+		emit MooerSettingsChanged(frame.group());
+		break;
+	case Mooer::RxFrame::Volume:
+		m_mstate.volume = data_nochk[0];
+#ifdef MOOER_HAS_MIDI
+		if(m_midi)
+			m_midi->ControlChange(0, MIDI::ControlChange::Volume, m_mstate.volume);
+#endif
+		break;
 	case Mooer::RxFrame::Menu:
 		m_mstate.activeMenu = data_nochk[0];
 		break;
 	default:
-		qDebug() << QString("MooerManager: received frame 0x%1, size %2")
+		qDebug() << QString("MooerManager: received unhandled frame 0x%1, size %2")
 						.arg((int)frame.group(), 0, 16)
 						.arg(frame.data.size());
 		break;
 	}
-#if DEBUG_LVL > 2
+#if DEBUG_LVL > 5
 	if(frame.group() != Mooer::RxFrame::PatchSetting && (data.size() > 20))
 	{
 		int sz = frame.data.size();
@@ -597,13 +635,15 @@ void MooerManager::OnControlChange(std::uint8_t channel, MIDI::ControlChange con
 
 void MooerManager::OnProgramChange(std::uint8_t channel, std::uint8_t value)
 {
-	// std::lock_guard lock{m_dev_mutex};
+	std::lock_guard lock{m_dev_mutex};
+	m_mooer.SendPresetChange(value);
 }
 
 
 void MooerManager::OnSysex(std::uint8_t channel, MIDI::Manufacturer manufacturer, std::span<std::uint8_t> data)
 {
-	// std::lock_guard lock{m_dev_mutex};
+	std::lock_guard lock{m_dev_mutex};
+	m_mooer.SendWithHeaderAndChecksum(data);
 }
 
 
@@ -632,14 +672,17 @@ void MooerManager::UpdateSettingsView(Mooer::RxFrame::Group group)
 
 	if(group == Mooer::RxFrame::Group::AMP)
 	{
-		QSignalBlocker bAmp(m_ui.cb_amp_type);
-		// qDebug() << std::format("{} ampNames, {} dropdowns", m_mstate.ampModelNames.size(),
-		// m_ui.cb_amp_type->count());
-		for(int n = 0; n < m_mstate.ampModelNames.size(); n++)
+		if(!m_mstate.ampModelNames.empty())
 		{
-			auto name = QString::fromLatin1(m_mstate.ampModelNames[n].data(), m_mstate.ampModelNames[n].size());
-			m_ui.cb_amp_type->setItemText(n + 55, name);
-			// qDebug() << "UpdateSettingsView " << (n + 55) << " " << name;
+			QSignalBlocker bAmp(m_ui.cb_amp_type);
+			// qDebug() << std::format("{} ampNames, {} dropdowns", m_mstate.ampModelNames.size(),
+			// m_ui.cb_amp_type->count());
+			for(int n = 0; n < m_mstate.ampModelNames.size(); n++)
+			{
+				auto name = QString::fromLatin1(m_mstate.ampModelNames[n].data(), m_mstate.ampModelNames[n].size());
+				m_ui.cb_amp_type->setItemText(n + 55, name);
+				// qDebug() << "UpdateSettingsView " << (n + 55) << " " << name;
+			}
 		}
 		WBS(m_ui.cb_amp_enabled)->setChecked(preset.amp.enabled);
 		WBS(m_ui.cb_amp_type)->setCurrentIndex(preset.amp.type - 1);
@@ -653,6 +696,16 @@ void MooerManager::UpdateSettingsView(Mooer::RxFrame::Group group)
 
 	if(group == Mooer::RxFrame::Group::CAB)
 	{
+		if(!m_mstate.cabModelNames.empty())
+		{
+			QSignalBlocker bAmp(m_ui.cb_cab_type);
+			for(int n = 0; n < m_mstate.cabModelNames.size(); n++)
+			{
+				auto name = QString::fromLatin1(m_mstate.cabModelNames[n].data(), m_mstate.cabModelNames[n].size());
+				m_ui.cb_cab_type->setItemText(n + 26, name);
+			}
+		}
+
 		WBS(m_ui.cb_cab_enabled)->setChecked(preset.cab.enabled);
 		WBS(m_ui.cb_cab_type)->setCurrentIndex(preset.cab.type - 1);
 		WBS(m_ui.cb_cab_tube)->setCurrentIndex(preset.cab.tube);

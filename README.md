@@ -8,6 +8,19 @@ but this one runs on Linux as well.
 
 ![Screenshot of the application](./doc/screenshot_kde.png "Application running in KDE")
 
+## Features
+
+- USB hotplugging: can (dis-)connect the pedal while the program is running
+- Control (most) effect parameters
+- Load/Save presets
+- Load .amp Amplifier and .wav Cabinet simulations
+- Send and Receive MIDI commands via a virtual midi port
+
+The following MIDI commands are supported:
+- Program Change: Send and receive preset change
+- Control Change: Send Volume and Reverb
+- SysEx: Receive arbitrary commands, see `Parser()` in [MooerParser.h](./mooer.lib/MooerParser.h) for details.
+
 
 # Development notes
 
@@ -40,16 +53,14 @@ SUBSYSTEM=="usb", ATTR{idVendor}=="0483", ATTR{idProduct}=="5703", GROUP="plugde
 
 ## MIDI interface
 
-It'd be nice to automate the pedal via the MIDI protocol. On Linux there is: ALSA, Jack, Pulseaudio, Pipewire.
-On Windows there is: Multimedia Library, UWP
+On Linux there are ALSA, Jack, Pulseaudio and Pipewire.
+Expose both Jack and Pipewire sinks, not sure which one is more popular.
+The MIDI interface can be tested with [RTmidi](https://pypi.org/project/python-rtmidi) or using ALSA's `aseqdump -p 129:0`.
 
+On Windows there are Multimedia Library, UWP and some custom drives.
 To create a virtual (non-hardware) MIDI port, such that applications can connect to each other,
 use a [VirtualMIDI](https://www.tobias-erichsen.de/software/virtualmidi.html) or [LoopBE1](https://www.nerds.de/en/download.html) driver.
 
-Expose both Jack and Pipewire sinks, not sure which one is more popular.
-Or use http://www.music.mcgill.ca/~gary/rtmidi/index.html
-
-To test with a python script: https://pypi.org/project/python-rtmidi/
 
 ### MIDI Protocol
 

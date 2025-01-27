@@ -100,7 +100,7 @@ static auto CreateControlChange(std::uint8_t channel, ControlChange controller, 
 
 static auto CreateProgramChange(std::uint8_t channel, std::uint8_t value)
 {
-	return std::array<std::uint8_t, 3>{Message::ProgramChange | channel, value, 0};
+	return std::array<std::uint8_t, 2>{Message::ProgramChange | channel, value};
 }
 
 static void CreateSysex(std::vector<std::uint8_t>& dst,
@@ -129,9 +129,9 @@ class Sink
 public:
 	virtual ~Sink() = default;
 
-	virtual void ControlChange(std::uint8_t channel, ControlChange controller, std::uint8_t value) {};
-	virtual void ProgramChange(std::uint8_t channel, std::uint8_t value) {};
-	virtual void Sysex(std::uint8_t channel, Manufacturer manufacturer, std::span<std::uint8_t> value) {};
+	virtual void ControlChange(std::uint8_t channel, ControlChange controller, std::uint8_t value) = 0;
+	virtual void ProgramChange(std::uint8_t channel, std::uint8_t value) = 0;
+	virtual void Sysex(std::uint8_t channel, Manufacturer manufacturer, std::span<std::uint8_t> value) = 0;
 };
 
 /// Base class for anything that wants to send (via Sink) and receive (via Callback) MIDI

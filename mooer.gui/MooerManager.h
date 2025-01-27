@@ -4,12 +4,12 @@
 
 #include <QMainWindow>
 
-#include <Midi.h>
 #include <MooerParser.h>
 #include <UsbConnection.h>
+#include <midi/Midi.h>
 
 #if defined(__linux__) || defined(_WIN32)
-// #define MOOER_HAS_MIDI
+#define MOOER_HAS_MIDI
 #endif
 
 
@@ -25,6 +25,7 @@ public:
 	~MooerManager();
 
 signals:
+	void MooerConnected();
 	void MooerIdentity(QString version, QString name);
 	void MooerPatchSetting(int idx); ///< Received the settings for this patch
 	void MooerPatchChange(int idx);	 ///< Index of the active patch

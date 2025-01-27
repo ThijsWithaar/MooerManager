@@ -3,7 +3,7 @@
 #include <jack/jack.h>
 #include <jack/midiport.h>
 
-#include <Midi.h>
+#include <midi/Midi.h>
 
 
 namespace Jack

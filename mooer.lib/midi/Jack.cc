@@ -5,7 +5,8 @@
 #include <jack/jack.h>
 #include <jack/midiport.h>
 
-#include <Jack.h>
+#include <midi/Jack.h>
+
 
 namespace Jack
 {

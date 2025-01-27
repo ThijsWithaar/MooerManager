@@ -1,5 +1,5 @@
 
-debian_add_package(libfmt-dev libpipewire-0.3-dev libzip-dev zipcmp zipmerge ziptool libpugixml-dev)
+debian_add_package(libasound2-dev libfmt-dev libpipewire-0.3-dev libzip-dev zipcmp zipmerge ziptool libpugixml-dev)
 
 if(DEFINED CMAKE_TOOLCHAIN_FILE)
 	find_package(PkgConfig REQUIRED)
@@ -9,6 +9,7 @@ else()
 endif()
 
 if(UNIX AND NOT APPLE)
+	find_package(ALSA REQUIRED)
 	find_package(pipewire REQUIRED)
 	find_package(jack)
 endif()
@@ -17,19 +18,19 @@ find_package(fmt REQUIRED)
 find_package(libzip CONFIG REQUIRED)
 find_package(PugiXML REQUIRED)
 
-file(GLOB HEADERS CONFIGURE_DEPENDS *.h)
-file(GLOB SOURCES CONFIGURE_DEPENDS *.cc)
+file(GLOB_RECURSE HEADERS CONFIGURE_DEPENDS *.h)
+file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS *.cc)
 
 set(SOURCES_WIN TeVirtualMidi.cc WindowsMultiMedia.cc)
-set(SOURCES_LINUX Jack.cc Pipewire.cc)
+set(SOURCES_LINUX Alsa.cc Jack.cc Pipewire.cc)
 if(NOT WIN32)
 	foreach(SRC ${SOURCES_WIN})
-		list(REMOVE_ITEM SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/${SRC})
+		list(REMOVE_ITEM SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/midi/${SRC})
 	endforeach()
 endif()
 if(NOT UNIX OR APPLE)
 	foreach(SRC ${SOURCES_LINUX})
-		list(REMOVE_ITEM SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/${SRC})
+		list(REMOVE_ITEM SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/midi/${SRC})
 	endforeach()
 endif()
 
@@ -60,6 +61,7 @@ target_link_libraries(MooerLib PRIVATE
 if(UNIX AND NOT APPLE)
 	target_link_libraries(MooerLib
 		PUBLIC 
+			ALSA::ALSA
 			LIBUSB::LIBUSB
 			Pipewire::Spa
 		PRIVATE
@@ -73,10 +75,11 @@ endif()
 
 if(WIN32)
 	# https://stackoverflow.com/a/71134764/673137
+	set(DEF ${CMAKE_CURRENT_SOURCE_DIR}/midi/teVirtualMIDI64.def)
 	add_custom_command(
 		OUTPUT ${CMAKE_BINARY_DIR}/teVirtualMIDI64.lib
-		COMMAND lib.exe /machine:X64 /def:${CMAKE_CURRENT_SOURCE_DIR}/teVirtualMIDI64.def /out:${CMAKE_BINARY_DIR}/teVirtualMIDI64.lib
-		DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/teVirtualMIDI64.def
+		COMMAND lib.exe /machine:X64 /def:${DEF} /out:${CMAKE_BINARY_DIR}/teVirtualMIDI64.lib
+		DEPENDS ${DEF}
 		VERBATIM
 	)
 

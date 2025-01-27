@@ -4,7 +4,7 @@ FROM fedora:rawhide
 RUN dnf install -y @development-tools redhat-lsb rpmdevtools nano git cmake ninja-build clang lld \
 		ImageMagick \
 		boost-devel fmt-devel libzip-devel libzip-tools pugixml-devel qt6-qtbase-devel qt6-qttools-devel \
-		libusb1-devel pipewire-devel jack-audio-connection-kit-devel \
+		alsa-lib-devel libusb1-devel pipewire-devel jack-audio-connection-kit-devel \
 		flac-devel opus-devel soxr-devel && \
 	dnf clean dbcache && \
 	ln -fs /usr/bin/clang /usr/bin/cc && \
